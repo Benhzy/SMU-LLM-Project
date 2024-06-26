@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 # Cache directory
-cache_dir = "./local_model_cache"
+cache_dir = "../.cache"
 
 # Load the model from the local directory
 model = transformers.AutoModelForCausalLM.from_pretrained(cache_dir, torch_dtype=torch.bfloat16)
