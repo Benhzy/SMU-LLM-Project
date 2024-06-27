@@ -2,6 +2,11 @@
 # Relevant papers:
 https://ar5iv.labs.arxiv.org/html/2212.01326
 https://ar5iv.labs.arxiv.org/html/2401.16212
+
+# Next steps:
+1. Include a database of legal rules and retrieve using vector similarity
+2. Use actual Tort exam answers for few shot prompting 
+3. Train model using actual Tort exam answers using LORA (but need relatively large amount of data)
 """
 
 

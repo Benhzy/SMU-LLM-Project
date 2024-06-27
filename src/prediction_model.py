@@ -43,9 +43,10 @@ class ModelPredictor:
             import transformers
             import torch
 
-            cache_dir = "../.cache"
+            cache_dir = "./.cache"
             self.local_model = transformers.AutoModelForCausalLM.from_pretrained(cache_dir, torch_dtype=torch.bfloat16)
             self.local_tokenizer = transformers.AutoTokenizer.from_pretrained(cache_dir)
+            print(f"GPU is {torch.cuda.is_available()}")
             self.local_pipeline = transformers.pipeline(
                 "text-generation",
                 model=self.local_model,
@@ -53,7 +54,7 @@ class ModelPredictor:
                 device=0 if torch.cuda.is_available() else -1,  # Use GPU if available
                 pad_token_id=self.local_tokenizer.eos_token_id,
                 truncation=True,
-                max_length=50
+                max_length=2000
             )
 
     def predict(self, user_prompt: str = None) -> str:
@@ -73,7 +74,7 @@ class ModelPredictor:
                 predictions = response.predictions
                 cleaned_predictions = []
                 for prediction in predictions:
-                    parts = prediction.split("Output:")
+                    parts = prediction.split("My answer is:")
                     cleaned_text = parts[-1] if len(parts) > 1 else prediction
                     cleaned_predictions.append(cleaned_text)
                 return cleaned_predictions[0]
