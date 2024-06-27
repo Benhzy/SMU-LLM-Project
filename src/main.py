@@ -10,7 +10,6 @@ def generate_answers(data, epoch):
 
     # Iterate over each file in the JSON data
     for item in data:
-        file_name = item['file']
         scenario = item['scenario']
         questions = item['questions']
         answers = {}
