@@ -2,7 +2,6 @@ import json
 import logging
 from typing import Dict, List, Union
 
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,13 +15,14 @@ with open('settings.json', 'r') as settings_file:
 class ModelPredictor:
     def __init__(self, system_prompt):
         self.system_prompt = system_prompt
-        
+        self.max_length = 2000
+
         # Load settings from settings.json
         with open('settings.json', 'r') as settings_file:
             settings = json.load(settings_file)
         
         self.pipeline = settings["pipeline"]
-        # Load settings of each pipeline below:    
+        # Load settings of each pipeline below:
         if self.pipeline == "vertex_ai":
             from google.cloud import aiplatform
             """
@@ -37,11 +37,12 @@ class ModelPredictor:
             self.client_options = {"api_endpoint": self.api_endpoint}
             self.client = aiplatform.gapic.PredictionServiceClient(client_options=self.client_options)
             self.endpoint = self.client.endpoint_path(project=self.project, location=self.location, endpoint=self.endpoint_id)
-            self.max_length = 600
         
         elif self.pipeline == "local_model":
             import transformers
             import torch
+            print(torch.cuda.is_available())
+            print(torch.version.cuda)
 
             cache_dir = "./.cache"
             self.local_model = transformers.AutoModelForCausalLM.from_pretrained(cache_dir, torch_dtype=torch.bfloat16)
@@ -54,8 +55,9 @@ class ModelPredictor:
                 device=0 if torch.cuda.is_available() else -1,  # Use GPU if available
                 pad_token_id=self.local_tokenizer.eos_token_id,
                 truncation=True,
-                max_length=2000
+                max_length=self.max_length
             )
+
 
     def predict(self, user_prompt: str = None) -> str:
         prompt = f"{self.system_prompt} \n{user_prompt}\n"

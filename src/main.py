@@ -3,6 +3,11 @@ from prediction_model import ModelPredictor
 from system_prompts import sys_prompt
 from datetime import datetime
 
+"""
+USAGE INSTRUCTIONS!!
+(create a notebook)
+"""
+
 def generate_answers(data, epoch):
     predictor = ModelPredictor(
         system_prompt=sys_prompt("ans_tort_qns"),

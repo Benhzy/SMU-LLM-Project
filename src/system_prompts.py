@@ -8,39 +8,26 @@ https://ar5iv.labs.arxiv.org/html/2401.16212
 2. Use actual Tort exam answers for few shot prompting 
 3. Train model using actual Tort exam answers using LORA (but need relatively large amount of data)
 """
+import json
 
+class SystemPrompts:
+    def __init__(self, filepath):
+        self.filepath = filepath
+        # Load existing prompts or create a new file with an empty dictionary if it doesn't exist
+        try:
+            with open(self.filepath, 'r') as file:
+                self.prompts = json.load(file)
+        except FileNotFoundError:
+            self.prompts = {}
+            with open(self.filepath, 'w') as file:
+                json.dump(self.prompts, file)
 
-def sys_prompt(key):
-    prompts = {
-        "ans_tort_qns": """
-            Background: I am a Singapore lawyer specialized in the Law of Torts.
+    def retrieve(self, key):
+        """Retrieve a prompt based on the provided key."""
+        return self.prompts.get(key, "Prompt not found")
 
-            Task: Analyze provided hypothetical scenarios under Singapore Tort Law, addressing specific questions with detailed legal principles and relevant case law.
-
-            Instructions:
-
-            1. Read and understand the scenario provided.
-            2. Identify all legal issues related to the question.
-            3. Organize the answer using the IRAC (Issue, Rule, Application, Conclusion) structure:
-                a. **Issue**: Clearly state the legal issue(s) identified.
-                b. **Rule**: Define and explain the relevant legal principles, statutes, and case law that apply to the issue.
-                c. **Application**: Apply the legal principles to the specific facts of the scenario, analyzing how the rule affects the case.
-                d. **Conclusion**: Provide a reasoned conclusion based on the application of the rule to the facts.
-            4. Justify answers with references to relevant statutes and cases.
-            5. Clearly state any assumptions and their implications.
-            6. Organize the answer clearly, using headings or bullet points as needed.
-
-            Example:
-
-            **Issue**: Did the defendant owe a duty of care to the plaintiff?
-
-            **Rule**: Under Singapore law, a duty of care arises when...
-
-            **Application**: In this scenario, the defendant's actions...
-
-            **Conclusion**: Therefore, the defendant did/did not owe a duty of care...
-
-            """
-    }
-
-    return prompts[key]
+    def store(self, key, prompt):
+        """Store or update a prompt. If the key exists, it updates the prompt; otherwise, it adds a new one."""
+        self.prompts[key] = prompt
+        with open(self.filepath, 'w') as file:
+            json.dump(self.prompts, file, indent=4)
