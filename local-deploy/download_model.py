@@ -3,7 +3,7 @@ from huggingface_hub import login
 import transformers
 import torch
 
-def download_and_save_model(model_id="meta-llama/Meta-Llama-3-8B-Instruct", cache_dir="./.cache"):
+def download_and_save_model(model_id="meta-llama/Meta-Llama-3-8B", cache_dir="./.cache"):
     # Login to Hugging Face Hub
     login()
 
@@ -24,5 +24,8 @@ def main():
     args = parser.parse_args()
     download_and_save_model(args.model_id, args.cache_dir)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
+
+
+download_and_save_model(model_id="meta-llama/Meta-Llama-3-8B", cache_dir="./.cache")

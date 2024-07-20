@@ -11,8 +11,8 @@ https://ar5iv.labs.arxiv.org/html/2401.16212
 import json
 
 class SystemPrompts:
-    def __init__(self, filepath):
-        self.filepath = filepath
+    def __init__(self):
+        self.filepath = "system_prompts.json"
         # Load existing prompts or create a new file with an empty dictionary if it doesn't exist
         try:
             with open(self.filepath, 'r') as file:
