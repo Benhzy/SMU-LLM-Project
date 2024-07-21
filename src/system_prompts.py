@@ -31,3 +31,13 @@ class SystemPrompts:
         self.prompts[key] = prompt
         with open(self.filepath, 'w') as file:
             json.dump(self.prompts, file, indent=4)
+
+    def remove(self, key):
+        """Remove a prompt based on the provided key."""
+        if key in self.prompts:
+            del self.prompts[key]
+            with open(self.filepath, 'w') as file:
+                json.dump(self.prompts, file, indent=4)
+            return f"Prompt '{key}' removed successfully."
+        else:
+            return "Prompt not found."

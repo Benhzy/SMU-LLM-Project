@@ -1,3 +1,4 @@
 {
-  "pipeline": "local_model" 
+  "pipeline": "openai", 
+  "model": "llama-3"
 }
