@@ -4,6 +4,8 @@ import re
 import logging
 from typing import Dict, List, Union
 
+import requests
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,13 +34,13 @@ class ModelPredictor:
         self.model_name = model_name
         
         # Load settings from settings.json
-        # with open('settings.json', 'r') as settings_file:
-        #     settings = json.load(settings_file)
+        with open('settings.json', 'r') as settings_file:
+            settings = json.load(settings_file)
         
         self.origin = identify_origin(model_name)
         if self.origin == 'others':
             # Load settings of each pipeline below:
-            self.pipeline = "local_model"
+            self.pipeline = settings["pipeline"]
             if self.pipeline == "vertex_ai":
                 from google.cloud import aiplatform
                 """
@@ -58,7 +60,7 @@ class ModelPredictor:
                 import transformers
                 import torch
 
-                cache_dir = "../.cache"
+                cache_dir = f"../.cache/{model_name}"
                 self.local_model = transformers.AutoModelForCausalLM.from_pretrained(cache_dir, torch_dtype=torch.bfloat16)
                 self.local_tokenizer = transformers.AutoTokenizer.from_pretrained(cache_dir)
                 self.local_pipeline = transformers.pipeline(
@@ -71,11 +73,7 @@ class ModelPredictor:
                     max_length=self.max_length
                 )
 
-        elif self.origin == "openai":
-            self.messages = [
-                {"role": "system", "content": "Your system message here"},
-                {"role": "user", "content": "Your user prompt here"}
-            ]
+
         
     def predict(self, user_prompt: str = None) -> str:
         prompt = f"{self.system_prompt} \n{user_prompt}\n"
@@ -105,11 +103,40 @@ class ModelPredictor:
             elif self.pipeline == "local_model":
                 try:
                     predictions = self.local_pipeline(prompt)
-                    print(predictions)
                     return predictions[0]["generated_text"]
                 except Exception as e:
                     logger.error(f"Local model prediction failed: {e}")
                     return f"Local model prediction failed: {e}"
+
+            elif self.pipeline == "lm_studio": 
+                try:            
+                    data = {
+                        "messages": [
+                            { "role": "system", "content": self.system_prompt },
+                            { "role": "user", "content": user_prompt }
+                        ],
+                        "temperature": 0,
+                        "max_tokens": 600,
+                        "stream": False
+                        }
+                    
+                    # Define the API URL and headers
+                    url = "http://localhost:1234/v1/chat/completions"
+                    headers = {
+                        "Content-Type": "application/json"
+                    }
+
+                    # Send the POST request
+                    response = requests.post(url, headers=headers, data=json.dumps(data))
+                    response_data = response.json()
+
+                    # Handle the response
+                    if response.ok:
+                        return response_data['choices'][0]['message']['content']                         
+                
+                except Exception as e:
+                    logger.error(f"LM Studio prediction failed: {e}")
+                    return f"LM Studio prediction failed: {e}"
 
         elif self.origin == "openai":
             from openai import OpenAI
@@ -125,4 +152,3 @@ class ModelPredictor:
             except Exception as e:
                 logger.error(f"OpenAI model prediction failed: {e}")
                 return f"OpenAI model prediction failed: {e}"
-
