@@ -1,4 +1,4 @@
 {
-  "pipeline": "local_model", 
-  "model": "Mistral-Nemo-Instruct-2407"
+  "pipeline": "lm_studio", 
+  "model": "Meta-Llama-3-8B-Instruct-GGUF"
 }

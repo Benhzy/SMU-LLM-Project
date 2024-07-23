@@ -115,7 +115,7 @@ class ModelPredictor:
                             { "role": "system", "content": self.system_prompt },
                             { "role": "user", "content": user_prompt }
                         ],
-                        "temperature": 0,
+                        "temperature": 0.2,
                         "max_tokens": 600,
                         "stream": False
                         }
