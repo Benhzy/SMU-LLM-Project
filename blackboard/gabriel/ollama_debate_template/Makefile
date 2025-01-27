@@ -1,8 +1,7 @@
 all:run
 
 run:
-	@echo "executing main.py..."
-	@python3 main.py
+	@python3 ollama_prompt.py
 
 config: 
 	@pip install -r requirements.txt

@@ -4,6 +4,11 @@
 
 This project is developed using Python 3.12.3. To set up the project environment:
 - Create a virtual environment.
+```
+python -m venv myenv
+source myenv/Scripts/activate
+```
+
 - Install all the required packages by running:
   ```
   pip install -r requirements.txt 
