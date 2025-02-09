@@ -2,7 +2,6 @@ import os
 import pickle
 from typing import Dict, List, Optional, Tuple
 from legalagents import SGLawyer, USLawyer, SGParliament, LegalReviewPanel
-import asyncio
 import argparse
 
 class LegalSimulationWorkflow:
@@ -18,7 +17,7 @@ class LegalSimulationWorkflow:
         self.legal_question = legal_question
         self.max_steps = max_steps
         self.openai_api_key = openai_api_key
-        self.model_backbone = model_backbone or "gpt-4"
+        self.model_backbone = model_backbone or "gpt-4o-mini"
         self._validate_model_backbone()
         
         # Initialize agents
@@ -71,13 +70,9 @@ class LegalSimulationWorkflow:
         os.makedirs("state_saves", exist_ok=True)
 
     def _validate_model_backbone(self) -> None:
-        """
-        Validate the selected model backbone.
-        Currently supports GPT-4 and GPT-3.5 models.
-        """
+
         valid_models = [
-            "gpt-4", "gpt-4-turbo-preview", "gpt-3.5-turbo",
-            "gpt-4-0125-preview", "gpt-4-1106-preview"
+            "gpt-4o-mini"
         ]
         
         if self.model_backbone not in valid_models:
@@ -94,7 +89,7 @@ class LegalSimulationWorkflow:
                         f"Handler method {handler_name} not implemented for subtask {subtask}"
                     )
 
-    async def execute_subtask(self, subtask: str) -> str:
+    def execute_subtask(self, subtask: str) -> str:
         """Execute a specific subtask by calling its handler method"""
         handler_name = f"execute_{subtask}"
         
@@ -113,7 +108,7 @@ class LegalSimulationWorkflow:
                     f"with value '{handler}', but should be a method"
                 )
                 
-            return await handler()
+            return handler()
             
         except Exception as e:
             print(f"Error executing subtask {subtask}: {str(e)}")
@@ -125,73 +120,73 @@ class LegalSimulationWorkflow:
                     print(f"  {attr_name}: {type(attr_value)}")
             raise
 
-    async def execute_statutory_law_review(self) -> str:
+    def execute_statutory_law_review(self) -> str:
         """Execute statutory law review phase"""
-        return await self.SG_lawyer.inference(
+        return self.SG_lawyer.inference(
             question=self.legal_question,
             phase="statutory_analysis",
             step=0
         )
 
-    async def execute_regulatory_framework(self) -> str:
+    def execute_regulatory_framework(self) -> str:
         """Execute regulatory framework analysis phase"""
-        return await self.US_lawyer.inference(
+        return self.US_lawyer.inference(
             question=self.legal_question,
             phase="federal_state_review",
             step=0
         )
 
-    async def execute_case_law_review(self) -> str:
+    def execute_case_law_review(self) -> str:
         """Execute case law review phase"""
-        return await self.SG_lawyer.inference(
+        return self.SG_lawyer.inference(
             self.legal_question,
             phase="case_law_review",  
             step=0
         )
 
-    async def execute_precedent_analysis(self) -> str:
+    def execute_precedent_analysis(self) -> str:
         """Execute precedent analysis phase"""
-        return await self.US_lawyer.inference(
+        return self.US_lawyer.inference(
             self.legal_question,
             phase="comparative_analysis", 
             step=0
         )
 
-    async def execute_practice_implications(self) -> str:
+    def execute_practice_implications(self) -> str:
         """Execute practice implications phase"""
-        return await self.SG_lawyer.inference(
+        return self.SG_lawyer.inference(
             self.legal_question,
             phase="practice_implications",  
             step=0
         )
 
-    async def execute_implementation_guidance(self) -> str:
+    def execute_implementation_guidance(self) -> str:
         """Execute implementation guidance phase"""
-        return await self.US_lawyer.inference(
+        return self.US_lawyer.inference(
             self.legal_question,
             phase="practice_insights",  
             step=0
         )
 
-    async def execute_perspective_integration(self) -> str:
+    def execute_perspective_integration(self) -> str:
         """Execute perspective integration phase"""
-        sg_review = await self.SG_lawyer.inference(
+        sg_review = self.SG_lawyer.inference(
             self.legal_question,
             phase="review",  
             step=0
         )
-        us_review = await self.US_lawyer.inference(
+        us_review = self.US_lawyer.inference(
             self.legal_question,
             phase="review", 
             step=0
         )
-        parliament_review = await self.SG_parliament.inference(
+        parliament_review = self.SG_parliament.inference(
             self.legal_question,
             phase="review", 
             step=0
         )
         
-        synthesis = await self.peer_reviewers.synthesize_reviews([{
+        synthesis = self.peer_reviewers.synthesize_reviews([{
             "perspective": "singapore_law",
             "review": sg_review
         }, {
@@ -203,53 +198,50 @@ class LegalSimulationWorkflow:
         }])
         return synthesis["synthesis"]
 
-    async def execute_recommendation_development(self) -> str:
+    def execute_recommendation_development(self) -> str:
         """Execute recommendation development phase"""
-        return await self.SG_parliament.inference(
+        return self.SG_parliament.inference(
             self.legal_question,
             phase="policy_analysis", 
             step=0
         )
 
-    async def execute_initial_review(self) -> str:
+    def execute_initial_review(self) -> str:
         """Execute initial review phase"""
-        sg_review = await self.SG_lawyer.inference(
+        sg_review = self.SG_lawyer.inference(
             self.legal_question,
             phase="review",
             step=0
         )
-        synthesis = await self.peer_reviewers.synthesize_reviews([{
+        synthesis = self.peer_reviewers.synthesize_reviews([{
             "perspective": "singapore_law",
             "review": sg_review
         }])
         return synthesis["synthesis"]
 
-    async def execute_revision_process(self) -> str:
+    def execute_revision_process(self) -> str:
         """Execute revision process phase"""
-        initial_review = await self.execute_initial_review()
-        parliament_review = await self.SG_parliament.inference(
+        initial_review = self.execute_initial_review()
+        parliament_review = self.SG_parliament.inference(
             f"{self.legal_question}\n\nInitial Review:\n{initial_review}",
             phase="review",
             step=0
         )
-        synthesis = await self.peer_reviewers.synthesize_reviews([{
+        synthesis = self.peer_reviewers.synthesize_reviews([{
             "perspective": "parliament",
             "review": parliament_review
         }])
         return synthesis["synthesis"]
 
-    async def perform_legal_analysis(self) -> None:
+    def perform_legal_analysis(self) -> None:
         """Execute the complete legal analysis workflow"""
         for phase_name, subtasks in self.phases:
             print(f"\nExecuting phase: {phase_name}")
             for subtask in subtasks:
                 print(f"  Executing subtask: {subtask}")
                 try:
-                    result = await self.execute_subtask(subtask)
+                    result = self.execute_subtask(subtask)
                     self.phase_status[subtask] = True
-                    
-                    # Save state after each successful subtask
-                    self.save_state(phase_name)
                     
                     print(f"  Completed subtask: {subtask}")
                     
@@ -350,7 +342,7 @@ def parse_arguments():
     )
     return parser.parse_args()
 
-async def main():
+def main():
     """Main execution flow"""
     # Parse arguments
     args = parse_arguments()
@@ -400,7 +392,7 @@ async def main():
     # Execute analysis workflow
     try:
         print("\nBeginning legal analysis...")
-        await workflow.perform_legal_analysis()
+        workflow.perform_legal_analysis()
         print("\nAnalysis complete! Results have been saved.")
         print("\nYou can find the detailed analysis in the 'state_saves' directory.")
         
@@ -410,4 +402,4 @@ async def main():
         return
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

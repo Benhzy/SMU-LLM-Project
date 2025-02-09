@@ -28,7 +28,7 @@ class BaseAgent:
     
     def __init__(
         self, 
-        model: str = "gpt-4",
+        model: str = "gpt-4o-mini",
         notes: Optional[List[Dict[str, Any]]] = None,
         max_steps: int = 100,
         max_history: int = 15,
@@ -79,7 +79,7 @@ class BaseAgent:
         """Override this method in subclasses to provide phase-specific prompts"""
         raise NotImplementedError
 
-    async def inference(
+    def inference(
         self,
         question: str,
         phase: str,
@@ -88,8 +88,6 @@ class BaseAgent:
         temp: Optional[float] = None
     ) -> str:
         """
-        Run inference for the agent. Modified to match query_model interface.
-        
         Args:
             question: The legal question to analyze
             phase: Current phase of analysis
@@ -132,7 +130,7 @@ class BaseAgent:
         )
 
         try:
-            model_resp = await query_model(
+            model_resp = query_model(
                 model_str=self.model,
                 system_prompt=system_prompt,
                 prompt=user_prompt,
@@ -412,7 +410,7 @@ class LegalReviewPanel:
             )
         ]
     
-    async def synthesize_reviews(self, reviews: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def synthesize_reviews(self, reviews: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Synthesize reviews with Singapore focus"""
         synthesis = {
             "sg_law_perspective": next(r["review"] for r in reviews 
@@ -447,7 +445,7 @@ class LegalReviewPanel:
         4. Recommendations for implementation"""
         
         try:
-            synthesis_response = await query_model(
+            synthesis_response = query_model(
                 model_str=self.model,
                 system_prompt=sys_prompt,
                 prompt=synthesis_prompt,
