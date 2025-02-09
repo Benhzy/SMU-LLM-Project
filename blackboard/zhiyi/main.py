@@ -43,7 +43,7 @@ class LegalSimulationWorkflow:
         
         # Define workflow phases
         self.phases = [
-            ("statutory analysis", ["statute", "federal law"]),
+            ("statutory analysis", ["statutory_law_review", "regulatory_framework"]),
             ("case law analysis", ["case_law_review", "precedent_analysis"]),
             ("practical implications", ["practice_implications", "implementation_guidance"]),
             ("synthesis", ["perspective_integration", "recommendation_development"]),
@@ -124,14 +124,6 @@ class LegalSimulationWorkflow:
                     attr_value = getattr(self, attr_name)
                     print(f"  {attr_name}: {type(attr_value)}")
             raise
-
-    async def execute_common_law_analysis(self) -> str:
-        """Execute common law analysis phase"""
-        return await self.SG_lawyer.inference(
-            self.legal_question,
-            phase="jurisdictional_analysis",
-            step=0
-        )
 
     async def execute_statutory_law_review(self) -> str:
         """Execute statutory law review phase"""
@@ -215,7 +207,7 @@ class LegalSimulationWorkflow:
         """Execute recommendation development phase"""
         return await self.SG_parliament.inference(
             self.legal_question,
-            phase="policy_analysis",  # Using correct phase name from SGParliament
+            phase="policy_analysis", 
             step=0
         )
 
@@ -223,7 +215,7 @@ class LegalSimulationWorkflow:
         """Execute initial review phase"""
         sg_review = await self.SG_lawyer.inference(
             self.legal_question,
-            phase="review",  # Using correct phase name
+            phase="review",
             step=0
         )
         synthesis = await self.peer_reviewers.synthesize_reviews([{
