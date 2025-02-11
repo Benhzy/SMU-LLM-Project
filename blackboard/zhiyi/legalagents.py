@@ -28,30 +28,36 @@ class BaseAgent:
     
     def __init__(
         self, 
-        model: str = "gpt-4o-mini",
+        agent_type: str,
+        config: Dict[str, Any],
         notes: Optional[List[Dict[str, Any]]] = None,
-        max_steps: int = 100,
-        max_history: int = 15,
         openai_api_key: Optional[str] = None
     ):
         """
         Initialize base agent
         
         Args:
-            model: Name of the LLM model to use
+            agent_type: Type of agent (sg_lawyer, us_lawyer)
+            config: Configuration dictionary loaded from JSON
             notes: List of notes/instructions for the agent
-            max_steps: Maximum number of steps per phase
-            max_history: Maximum number of history entries to keep
             openai_api_key: OpenAI API key
         """
+        if agent_type not in config:
+            raise ValueError(f"Invalid agent type: {agent_type}")
+            
+        agent_config = config[agent_type]
+        default_config = agent_config['default_config']
+        
+        self.agent_type = agent_type
+        self.role_desc = agent_config['role_description']
+        self.phase_prompts = agent_config['phase_prompts']
         self.notes = notes or []
-        self.max_steps = max_steps
-        self.model = model
-        self.phases: List[str] = []
+        self.max_steps = default_config['max_steps']
+        self.model = default_config['model']
         self.history: List[tuple[Optional[int], str]] = []
         self.prev_comm = ""
         self.openai_api_key = openai_api_key
-        self.max_hist_len = max_history
+        self.max_hist_len = default_config['max_history']
         
         # Rate limiting
         self.last_api_call = 0
@@ -72,12 +78,14 @@ class BaseAgent:
             self.history.pop(0)
 
     def role_description(self) -> str:
-        """Override this method in subclasses to provide role-specific description"""
-        raise NotImplementedError
+        """Return the role description from config"""
+        return self.role_desc
 
     def phase_prompt(self, phase: str) -> str:
-        """Override this method in subclasses to provide phase-specific prompts"""
-        raise NotImplementedError
+        """Return the phase prompt from config"""
+        if phase not in self.phase_prompts:
+            raise ValueError(f"Invalid phase {phase} for agent {self.agent_type}")
+        return self.phase_prompts[phase]
 
     def inference(
         self,
@@ -148,28 +156,19 @@ class BaseAgent:
         
         return model_resp
 
-    
 class SGLawyer(BaseAgent):
-    """Expert in Singapore law and legal practice"""
-    
     def __init__(
         self,
-        model: str = "gpt-4",
+        config: Dict[str, Any],
         notes: Optional[List[Dict[str, Any]]] = None,
-        max_steps: int = 100,
-        max_history: int = 15,
         openai_api_key: Optional[str] = None
     ):
-        # Pass all parameters to parent class
         super().__init__(
-            model=model,
+            agent_type='sg_lawyer',
+            config=config,
             notes=notes,
-            max_steps=max_steps,
-            max_history=max_history,
             openai_api_key=openai_api_key
         )
-        
-        # Define phases specific to Singapore legal analysis
         self.phases = [
             "statutory_analysis",
             "case_law_review",
@@ -177,72 +176,22 @@ class SGLawyer(BaseAgent):
             "review"
         ]
         self.perspective = "singapore_law"
-        self.sg_statutes = {}
+        self.sg_statutes = {}                           #TODO implement VDB for contextual knowledge
         self.sg_case_law = {}
-        
-    def role_description(self) -> str:
-        return """You are a senior Singapore lawyer with extensive experience in Singapore's legal system. 
-        You have a deep understanding of Singapore statutes, case law, and legal practice. 
-        Your analysis should always consider:
-        1. Relevant Singapore legislation and their interpretation
-        2. Leading Singapore court decisions
-        3. Singapore legal practice directions and professional conduct rules
-        4. Local context and public policy considerations"""
-    
-    def phase_prompt(self, phase: str) -> str:
-        if phase == "statutory_analysis":
-            return """Analyze the legal question focusing on relevant Singapore statutes. Consider:
-            - Primary legislation relevant to the issue
-            - Subsidiary legislation and regulations
-            - Legislative intent and parliamentary debates
-            - Statutory interpretation principles in Singapore context
-            - Recent legislative amendments and their impact"""
-            
-        elif phase == "case_law_review":
-            return """Review Singapore case law relevant to the question. Focus on:
-            - Leading Court of Appeal decisions
-            - High Court precedents
-            - Recent developments in case law
-            - Treatment of foreign precedents by Singapore courts
-            - Application of legal principles in local context"""
-            
-        elif phase == "practice_implications":
-            return """Examine practical implications for Singapore legal practice:
-            - Impact on day-to-day legal practice
-            - Compliance requirements
-            - Professional conduct considerations
-            - Client counseling approaches
-            - Risk management strategies"""
-            
-        elif phase == "review":
-            return """Review the analysis from a Singapore law perspective:
-            - Accuracy of statutory interpretation
-            - Proper application of Singapore case law
-            - Consideration of local context
-            - Practical viability in Singapore legal system"""
-            
-        raise ValueError(f"Invalid phase {phase}")
 
 class USLawyer(BaseAgent):
-    """Expert in US law providing comparative perspective"""
-    
     def __init__(
         self,
-        model: str = "gpt-4",
+        config: Dict[str, Any],
         notes: Optional[List[Dict[str, Any]]] = None,
-        max_steps: int = 100,
-        max_history: int = 15,
         openai_api_key: Optional[str] = None
     ):
-        # Pass all parameters to parent class
         super().__init__(
-            model=model,
+            agent_type='us_lawyer',
+            config=config,
             notes=notes,
-            max_steps=max_steps,
-            max_history=max_history,
             openai_api_key=openai_api_key
         )
-        
         self.phases = [
             "comparative_analysis",
             "federal_state_review",
@@ -250,209 +199,151 @@ class USLawyer(BaseAgent):
             "review"
         ]
         self.perspective = "us_law"
-        
-    def role_description(self) -> str:
-        return """You are a senior US lawyer providing comparative legal analysis between US and Singapore law.
-        You have experience in cross-border matters and understanding of both legal systems.
-        Your analysis should focus on:
-        1. Key differences between US and Singapore legal approaches
-        2. Relevant US legal principles and their applicability
-        3. Cross-jurisdictional considerations
-        4. Practical implications of different legal frameworks"""
-
-    def phase_prompt(self, phase: str) -> str:
-        if phase == "comparative_analysis":
-            return """Compare US and Singapore legal approaches:
-            - Fundamental differences in legal principles
-            - Treatment of similar issues in both jurisdictions
-            - Relative advantages and disadvantages
-            - Potential for legal convergence or divergence"""
-            
-        elif phase == "federal_state_review":
-            return """Analyze relevant US federal and state law:
-            - Applicable federal statutes and regulations
-            - Relevant state law variations
-            - Leading US court decisions
-            - Regulatory framework differences"""
-            
-        elif phase == "practice_insights":
-            return """Share insights from US legal practice:
-            - Common approaches in US jurisdiction
-            - Practical challenges and solutions
-            - Risk management strategies
-            - Cross-border considerations"""
-            
-        elif phase == "review":
-            return """Review the analysis considering US legal perspective:
-            - Accuracy of US law interpretation
-            - Comparative analysis quality
-            - Cross-jurisdictional implications
-            - Practical viability"""
-            
-        raise ValueError(f"Invalid phase {phase}")
-
-class SGParliament(BaseAgent):
-    """Representative providing legislative and policy perspective"""
-    
-    def __init__(
-        self,
-        model: str = "gpt-4",
-        notes: Optional[List[Dict[str, Any]]] = None,
-        max_steps: int = 100,
-        max_history: int = 15,
-        openai_api_key: Optional[str] = None
-    ):
-        # Pass all parameters to parent class
-        super().__init__(
-            model=model,
-            notes=notes,
-            max_steps=max_steps,
-            max_history=max_history,
-            openai_api_key=openai_api_key
-        )
-        
-        self.phases = [
-            "policy_analysis",
-            "legislative_intent",
-            "public_impact",
-            "review"
-        ]
-        self.perspective = "parliament"
-        self.legislative_records = {}
-        
-    def role_description(self) -> str:
-        return """You are a senior member of Singapore's Parliament with deep understanding of:
-        1. Singapore's legislative process and parliamentary procedures
-        2. Public policy considerations and national interests
-        3. Legislative intent and parliamentary history
-        4. Regulatory impact and public consultation processes"""
-    
-    def phase_prompt(self, phase: str) -> str:
-        if phase == "policy_analysis":
-            return """Analyze public policy implications:
-            - Alignment with national interests
-            - Impact on different stakeholder groups
-            - Economic and social considerations
-            - International obligations and commitments
-            - Regulatory impact assessment"""
-            
-        elif phase == "legislative_intent":
-            return """Examine legislative intent and history:
-            - Parliamentary debates and discussions
-            - Committee reports and recommendations
-            - Public consultation feedback
-            - Policy objectives and intended outcomes
-            - Legislative development process"""
-            
-        elif phase == "public_impact":
-            return """Assess impact on public interest:
-            - Effect on different segments of society
-            - Implementation challenges
-            - Compliance costs and benefits
-            - Public communication needs
-            - Potential unintended consequences"""
-            
-        elif phase == "review":
-            return """Review the analysis from policy perspective:
-            - Alignment with legislative intent
-            - Public policy considerations
-            - Stakeholder impact assessment
-            - Implementation viability"""
-            
-        raise ValueError(f"Invalid phase {phase}")
-
+        self.us_constitution = {}                           #TODO implement VDB for contextual knowledge
+        self.us_case_law = {}
 class LegalReviewPanel:
     """Specialized review panel for Singapore legal analysis"""
     
     def __init__(
         self,
-        model: str = "gpt-4",
+        agent_config: Dict[str, Any],
+        model: str = "gpt-4o-mini",
         openai_api_key: Optional[str] = None,
         max_steps: int = 100,
         max_history: int = 15,
-        notes: Optional[List[Dict[str, Any]]] = None
+        notes: Optional[List[Dict[str, Any]]] = None,
+        review_config_path: str = "settings/review.json"
     ):
         """
-        Initialize the review panel with configuration for all agents
+        Initialize the review panel with configuration
         
         Args:
-            model: The GPT model to use
-            openai_api_key: OpenAI API key for model access
+            model: Model to use for synthesis
+            openai_api_key: OpenAI API key
             max_steps: Maximum steps for agent analysis
             max_history: Maximum history entries to maintain
             notes: Additional notes or instructions for agents
+            review_config_path: Path to review configuration file
         """
         self.model = model
         self.openai_api_key = openai_api_key
         
-        # Initialize reviewers with consistent configuration
+        # Load configurations
+        try:
+            with open(review_config_path, 'r') as f:
+                self.review_config = json.load(f)
+        except Exception as e:
+            raise Exception(f"Error loading configurations: {str(e)}")
+        
+        # Initialize reviewers with configuration
         self.reviewers = [
             SGLawyer(
-                model=model,
-                openai_api_key=openai_api_key,
-                max_steps=max_steps,
-                max_history=max_history,
-                notes=notes
+                config=agent_config,
+                notes=notes,
+                openai_api_key=openai_api_key
             ),
             USLawyer(
-                model=model,
-                openai_api_key=openai_api_key,
-                max_steps=max_steps,
-                max_history=max_history,
-                notes=notes
-            ),
-            SGParliament(
-                model=model,
-                openai_api_key=openai_api_key,
-                max_steps=max_steps,
-                max_history=max_history,
-                notes=notes
+                config=agent_config,
+                notes=notes,
+                openai_api_key=openai_api_key
             )
         ]
+
+    def evaluate_review(self, review: str) -> Dict[str, int]:
+        """Evaluate a review based on criteria"""
+        scores = {}
+        for criterion, details in self.review_config["review_criteria"].items():
+            scores[criterion] = 8  # TODO add eval criteria/use model to eval
+        return scores
+
+    def get_feedback_template(self, scores: Dict[str, int]) -> str:
+        """Get appropriate feedback template based on scores"""
+        avg_score = sum(scores.values()) / len(scores)
+        thresholds = self.review_config["quality_thresholds"]
+        
+        if avg_score < thresholds["revision_required"]:
+            return self.review_config["feedback_templates"]["revision_needed"]
+        elif avg_score < thresholds["minor_improvements"]:
+            return self.review_config["feedback_templates"]["minor_improvements"]
+        else:
+            return self.review_config["feedback_templates"]["approval"]
     
     def synthesize_reviews(self, reviews: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Synthesize reviews with Singapore focus"""
+        """
+        Synthesize reviews with Singapore focus
+        
+        Args:
+            reviews: List of review dictionaries with perspective and content
+            
+        Returns:
+            Dictionary containing synthesized analysis
+        """
+        # Validate required perspectives
+        required_perspectives = {"singapore_law", "us_law"}
+        provided_perspectives = {r["perspective"] for r in reviews}
+        
+        if not required_perspectives.issubset(provided_perspectives):
+            missing = required_perspectives - provided_perspectives
+            raise ValueError(f"Missing required perspectives: {missing}")
+        
+        # Extract perspectives
         synthesis = {
             "sg_law_perspective": next(r["review"] for r in reviews 
                                     if r["perspective"] == "singapore_law"),
             "us_law_perspective": next(r["review"] for r in reviews 
                                     if r["perspective"] == "us_law"),
-            "parliament_perspective": next(r["review"] for r in reviews 
-                                        if r["perspective"] == "parliament"),
             "requires_revision": False,
             "synthesis": "",
-            "recommendations": []
+            "recommendations": [],
+            "scores": {}
         }
         
-        sys_prompt = """You are a senior legal expert synthesizing perspectives on a 
-        Singapore legal issue. Consider the local context and practical implications."""
-        
-        synthesis_prompt = f"""Please synthesize these perspectives for the Singapore context:
-
-        Singapore Law Perspective:
-        {synthesis['sg_law_perspective']}
-        
-        US Law Comparative Perspective:
-        {synthesis['us_law_perspective']}
-        
-        Parliamentary Perspective:
-        {synthesis['parliament_perspective']}
-        
-        Focus on:
-        1. Key agreements and disagreements
-        2. Practical implications for Singapore
-        3. Areas needing clarification
-        4. Recommendations for implementation"""
-        
         try:
+            # Get prompts from config
+            sys_prompt = self.review_config["synthesis"]["system_prompt"]
+            synthesis_prompt = self.review_config["synthesis"]["synthesis_template"].format(
+                sg_law_perspective=synthesis["sg_law_perspective"],
+                us_law_perspective=synthesis["us_law_perspective"]
+            )
+            
+            # Generate synthesis
             synthesis_response = query_model(
                 model_str=self.model,
                 system_prompt=sys_prompt,
                 prompt=synthesis_prompt,
                 openai_api_key=self.openai_api_key
             )
+            
+            # Extract recommendations
+            recommendations = []
+            if "Recommendations:" in synthesis_response:
+                rec_section = synthesis_response.split("Recommendations:")[1]
+                rec_lines = [line.strip() for line in rec_section.split("\n") 
+                           if line.strip() and line.strip().startswith("-")]
+                recommendations = rec_lines
+            
+            # Evaluate the synthesis
+            scores = self.evaluate_review(synthesis_response)
+            feedback_template = self.get_feedback_template(scores)
+            
             synthesis["synthesis"] = synthesis_response
+            synthesis["recommendations"] = recommendations
+            synthesis["scores"] = scores
+            synthesis["feedback_template"] = feedback_template
+            synthesis["requires_revision"] = (
+                sum(scores.values()) / len(scores) < 
+                self.review_config["quality_thresholds"]["revision_required"]
+            )
+            
             return synthesis
+            
         except Exception as e:
             print(f"Error in synthesis: {str(e)}")
             raise
+            
+    def get_reviewer(self, perspective: str) -> Optional[Any]:
+        """Get reviewer by perspective"""
+        for reviewer in self.reviewers:
+            if reviewer.perspective == perspective:
+                return reviewer
+        return None

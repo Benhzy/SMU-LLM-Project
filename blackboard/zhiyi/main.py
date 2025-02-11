@@ -1,8 +1,11 @@
 import os
-import pickle
+import json
+import datetime
 from typing import Dict, List, Optional, Tuple
-from legalagents import SGLawyer, USLawyer, SGParliament, LegalReviewPanel
+from legalagents import SGLawyer, USLawyer, LegalReviewPanel
 import argparse
+from configloader import load_agent_config
+
 
 class LegalSimulationWorkflow:
     def __init__(
@@ -10,247 +13,145 @@ class LegalSimulationWorkflow:
         legal_question: str,
         openai_api_key: str,
         max_steps: int = 100,
-        human_in_loop_flag: Optional[Dict[str, bool]] = None,
         model_backbone: Optional[str] = None
     ):
-        """Initialize with the same parameters but modified to work with updated BaseAgent"""
+        """Initialize the legal simulation workflow"""
         self.legal_question = legal_question
         self.max_steps = max_steps
         self.openai_api_key = openai_api_key
         self.model_backbone = model_backbone or "gpt-4o-mini"
-        self._validate_model_backbone()
         
-        # Initialize agents
-        self.SG_lawyer = SGLawyer(
-            model=self.model_backbone,
-            openai_api_key=self.openai_api_key
+        # Load agent configuration
+        try:
+            self.config = load_agent_config()
+        except Exception as e:
+            raise Exception(f"Error loading agent configuration: {str(e)}")
+        
+        # Initialize agents with configuration
+        self.sg_lawyer = SGLawyer(
+            config=self.config,
+            openai_api_key=openai_api_key
         )
-        self.US_lawyer = USLawyer(
-            model=self.model_backbone,
-            openai_api_key=self.openai_api_key
-        )
-        self.SG_parliament = SGParliament(
-            model=self.model_backbone,
-            openai_api_key=self.openai_api_key
+        
+        self.us_lawyer = USLawyer(
+            config=self.config,
+            openai_api_key=openai_api_key
         )
         
         # Initialize review panel
-        self.peer_reviewers = LegalReviewPanel(
-            model=self.model_backbone,
-            openai_api_key=self.openai_api_key
+        self.review_panel = LegalReviewPanel(
+            agent_config=self.config,
+            openai_api_key=openai_api_key,
+            max_steps=max_steps
         )
         
-        # Define workflow phases
-        self.phases = [
-            ("statutory analysis", ["statutory_law_review", "regulatory_framework"]),
-            ("case law analysis", ["case_law_review", "precedent_analysis"]),
-            ("practical implications", ["practice_implications", "implementation_guidance"]),
-            ("synthesis", ["perspective_integration", "recommendation_development"]),
-            ("review", ["initial_review", "revision_process"])
-        ]
-        
-        # Validate phase handlers exist
-        self._validate_phase_handlers()
+        # Create results directory with timestamp
+        self.timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.results_dir = os.path.join("results", f"analysis_{self.timestamp}")
+        os.makedirs(self.results_dir, exist_ok=True)
 
-        # Initialize phase tracking
-        self.phase_status: Dict[str, bool] = {
-            subtask: False 
-            for phase, subtasks in self.phases 
-            for subtask in subtasks
-        }
-
-        # Set human interaction settings
-        self.human_in_loop_flag = human_in_loop_flag or {
-            subtask: True
-            for _, subtasks in self.phases
-            for subtask in subtasks
-        }
-
-        # Create state save directory
-        os.makedirs("state_saves", exist_ok=True)
-
-    def _validate_model_backbone(self) -> None:
-
-        valid_models = [
-            "gpt-4o-mini"
-        ]
-        
-        if self.model_backbone not in valid_models:
-            print(f"Warning: Using unofficial model '{self.model_backbone}'")
-            print("Recommended models are:", ", ".join(valid_models))
-
-    def _validate_phase_handlers(self) -> None:
-        """Validate that all defined phases have corresponding handlers"""
-        for _, subtasks in self.phases:
-            for subtask in subtasks:
-                handler_name = f"execute_{subtask}"
-                if not hasattr(self, handler_name):
-                    raise NotImplementedError(
-                        f"Handler method {handler_name} not implemented for subtask {subtask}"
-                    )
-
-    def execute_subtask(self, subtask: str) -> str:
-        """Execute a specific subtask by calling its handler method"""
-        handler_name = f"execute_{subtask}"
-        
+    def _save_analysis_results(self, results: Dict) -> None:
+        """Save analysis results to JSON file"""
+        output_file = os.path.join(self.results_dir, "analysis_results.json")
         try:
-            if not hasattr(self, handler_name):
-                raise AttributeError(f"Handler method {handler_name} not found")
-                
-            handler = getattr(self, handler_name)
-            
-            print(f"Debug - Handler type: {type(handler)}")
-            print(f"Debug - Handler value: {handler}")
-            
-            if not callable(handler):
-                raise TypeError(
-                    f"Handler '{handler_name}' is a {type(handler)} "
-                    f"with value '{handler}', but should be a method"
-                )
-                
-            return handler()
-            
+            with open(output_file, 'w') as f:
+                json.dump(results, f, indent=2)
         except Exception as e:
-            print(f"Error executing subtask {subtask}: {str(e)}")
-            # Print the list of all attributes to help debug
-            print("\nAvailable methods:")
-            for attr_name in dir(self):
-                if attr_name.startswith('execute_'):
-                    attr_value = getattr(self, attr_name)
-                    print(f"  {attr_name}: {type(attr_value)}")
-            raise
+            raise Exception(f"Error saving analysis results: {str(e)}")
 
-    def execute_statutory_law_review(self) -> str:
-        """Execute statutory law review phase"""
-        return self.SG_lawyer.inference(
-            question=self.legal_question,
-            phase="statutory_analysis",
-            step=0
-        )
-
-    def execute_regulatory_framework(self) -> str:
-        """Execute regulatory framework analysis phase"""
-        return self.US_lawyer.inference(
-            question=self.legal_question,
-            phase="federal_state_review",
-            step=0
-        )
-
-    def execute_case_law_review(self) -> str:
-        """Execute case law review phase"""
-        return self.SG_lawyer.inference(
-            self.legal_question,
-            phase="case_law_review",  
-            step=0
-        )
-
-    def execute_precedent_analysis(self) -> str:
-        """Execute precedent analysis phase"""
-        return self.US_lawyer.inference(
-            self.legal_question,
-            phase="comparative_analysis", 
-            step=0
-        )
-
-    def execute_practice_implications(self) -> str:
-        """Execute practice implications phase"""
-        return self.SG_lawyer.inference(
-            self.legal_question,
-            phase="practice_implications",  
-            step=0
-        )
-
-    def execute_implementation_guidance(self) -> str:
-        """Execute implementation guidance phase"""
-        return self.US_lawyer.inference(
-            self.legal_question,
-            phase="practice_insights",  
-            step=0
-        )
-
-    def execute_perspective_integration(self) -> str:
-        """Execute perspective integration phase"""
-        sg_review = self.SG_lawyer.inference(
-            self.legal_question,
-            phase="review",  
-            step=0
-        )
-        us_review = self.US_lawyer.inference(
-            self.legal_question,
-            phase="review", 
-            step=0
-        )
-        parliament_review = self.SG_parliament.inference(
-            self.legal_question,
-            phase="review", 
-            step=0
-        )
-        
-        synthesis = self.peer_reviewers.synthesize_reviews([{
-            "perspective": "singapore_law",
-            "review": sg_review
-        }, {
-            "perspective": "us_law",
-            "review": us_review
-        }, {
-            "perspective": "parliament",
-            "review": parliament_review
-        }])
-        return synthesis["synthesis"]
-
-    def execute_recommendation_development(self) -> str:
-        """Execute recommendation development phase"""
-        return self.SG_parliament.inference(
-            self.legal_question,
-            phase="policy_analysis", 
-            step=0
-        )
-
-    def execute_initial_review(self) -> str:
-        """Execute initial review phase"""
-        sg_review = self.SG_lawyer.inference(
-            self.legal_question,
-            phase="review",
-            step=0
-        )
-        synthesis = self.peer_reviewers.synthesize_reviews([{
-            "perspective": "singapore_law",
-            "review": sg_review
-        }])
-        return synthesis["synthesis"]
-
-    def execute_revision_process(self) -> str:
-        """Execute revision process phase"""
-        initial_review = self.execute_initial_review()
-        parliament_review = self.SG_parliament.inference(
-            f"{self.legal_question}\n\nInitial Review:\n{initial_review}",
-            phase="review",
-            step=0
-        )
-        synthesis = self.peer_reviewers.synthesize_reviews([{
-            "perspective": "parliament",
-            "review": parliament_review
-        }])
-        return synthesis["synthesis"]
+    def _save_agent_outputs(self, agent_outputs: Dict) -> None:
+        """Save individual agent outputs"""
+        for agent_name, output in agent_outputs.items():
+            output_file = os.path.join(self.results_dir, f"{agent_name}_output.json")
+            try:
+                with open(output_file, 'w') as f:
+                    json.dump(output, f, indent=2)
+            except Exception as e:
+                raise Exception(f"Error saving {agent_name} output: {str(e)}")
 
     def perform_legal_analysis(self) -> None:
         """Execute the complete legal analysis workflow"""
-        for phase_name, subtasks in self.phases:
-            print(f"\nExecuting phase: {phase_name}")
-            for subtask in subtasks:
-                print(f"  Executing subtask: {subtask}")
-                try:
-                    result = self.execute_subtask(subtask)
-                    self.phase_status[subtask] = True
-                    
-                    print(f"  Completed subtask: {subtask}")
-                    
-                    if self.human_in_loop_flag.get(subtask, False):
-                        input("Press Enter to continue...")
-                        
-                except Exception as e:
-                    print(f"Error in subtask {subtask}: {str(e)}")
-                    raise
+        try:
+            print("\nInitiating legal analysis workflow...")
+            
+            # Store all analysis results
+            analysis_results = {
+                "legal_question": self.legal_question,
+                "timestamp": self.timestamp,
+                "model": self.model_backbone,
+                "agent_outputs": {},
+                "final_synthesis": None
+            }
+            
+            # Singapore Law Analysis
+            print("\nPerforming Singapore legal analysis...")
+            sg_analysis = {}
+            for phase in self.sg_lawyer.phases:
+                print(f"Phase: {phase}")
+                response = self.sg_lawyer.inference(
+                    question=self.legal_question,
+                    phase=phase,
+                    step=1
+                )
+                sg_analysis[phase] = response
+            analysis_results["agent_outputs"]["sg_lawyer"] = sg_analysis
+            
+            # US Law Comparative Analysis
+            print("\nPerforming US comparative analysis...")
+            us_analysis = {}
+            for phase in self.us_lawyer.phases:
+                print(f"Phase: {phase}")
+                response = self.us_lawyer.inference(
+                    question=self.legal_question,
+                    phase=phase,
+                    step=1
+                )
+                us_analysis[phase] = response
+            analysis_results["agent_outputs"]["us_lawyer"] = us_analysis
+            
+            # Synthesize reviews
+            print("\nSynthesizing perspectives...")
+            reviews = [
+                {
+                    "perspective": "singapore_law",
+                    "review": sg_analysis["review"]
+                },
+                {
+                    "perspective": "us_law",
+                    "review": us_analysis["review"]
+                }
+            ]
+            
+            synthesis = self.review_panel.synthesize_reviews(reviews)
+            analysis_results["final_synthesis"] = synthesis
+            
+            # Save all results
+            print("\nSaving analysis results...")
+            self._save_analysis_results(analysis_results)
+            self._save_agent_outputs(analysis_results["agent_outputs"])
+            
+            # Create summary file
+            summary_file = os.path.join(self.results_dir, "analysis_summary.txt")
+            with open(summary_file, 'w') as f:
+                f.write(f"Legal Analysis Summary\n")
+                f.write(f"{'='*50}\n\n")
+                f.write(f"Question: {self.legal_question}\n\n")
+                f.write(f"Analysis Date: {self.timestamp}\n\n")
+                f.write(f"Singapore Law Analysis:\n")
+                f.write(f"{'-'*20}\n")
+                f.write(sg_analysis["review"])
+                f.write(f"\n\nUS Law Comparative Analysis:\n")
+                f.write(f"{'-'*20}\n")
+                f.write(us_analysis["review"])
+                f.write(f"\n\nSynthesis:\n")
+                f.write(f"{'-'*20}\n")
+                f.write(synthesis["synthesis"])
+                
+            print(f"\nAnalysis complete! Results saved in: {self.results_dir}")
+            
+        except Exception as e:
+            raise Exception(f"Error during legal analysis: {str(e)}")
+
 
 class LegalQuestionPrompt:
     """Handles user interaction for legal question input"""
@@ -264,7 +165,6 @@ class LegalQuestionPrompt:
         print("\nThis system analyzes legal hypotheticals from multiple perspectives:")
         print("  • Singapore Legal Practitioner")
         print("  • US Legal Comparative Analysis")
-        print("  • Singapore Parliamentary Consideration")
         print("\nThe system will guide you through formulating your legal question.")
         print("=" * 80 + "\n")
 
@@ -372,21 +272,6 @@ def main():
     workflow = LegalSimulationWorkflow(
         legal_question=legal_question,
         openai_api_key=api_key,
-        human_in_loop_flag={
-            subtask: args.interactive
-            for subtask in [
-                "common_law_analysis",
-                "civil_law_analysis",
-                "cross_jurisdictional_study",
-                "principle_extraction",
-                "framework_development",
-                "literature_review",
-                "perspective_integration",
-                "recommendation_development",
-                "initial_review",
-                "revision_process"
-            ]
-        }
     )
     
     # Execute analysis workflow
@@ -394,7 +279,7 @@ def main():
         print("\nBeginning legal analysis...")
         workflow.perform_legal_analysis()
         print("\nAnalysis complete! Results have been saved.")
-        print("\nYou can find the detailed analysis in the 'state_saves' directory.")
+        print("\nYou can find the detailed analysis in the 'results' directory.")
         
     except Exception as e:
         print(f"\nError during analysis: {str(e)}")
