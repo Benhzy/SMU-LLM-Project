@@ -3,6 +3,11 @@
 
 # Dings that I have found from [`AgentCourt`](./AgentCourt/)
 
+<div align="center">
+    <img src="https://media.tenor.com/hqvEDz6LnxMAAAAe/%D0%B2%D0%B0%D1%85%D1%83%D0%B5.png">
+    <p><i>POV: You're a visual learner who learns visually through visuals made for learning.</i></p>
+</div>
+
 ## Question
 
 Look into `db.py` and identify, then modify the retrieval function, prioritize metadata retrieval then KNN retrieval @gong.
@@ -42,8 +47,69 @@ def query_experience(self, query_text, n_results=5, include=["documents"]):
     * *Can also add the `where` parameter that ChromaDB supports to further filter results, would benefit our tagging system*
     * *Can also add the `threshold` parameter that ChromaDB supports to filter results by similarity score*
 
-## I want to see results! Show me the results!!! Also explain what you did!!!
+## I want to see results! Show me the results!!! Also explain what you did!!! But visually!!! (I'm a visual learner)
 
 See [`modified_db.py`](./AgentCourt/EMDB/modified_db.py).
 
+I added/modified the below methods wahoo.
 
+* `.add_to_case()` 
+    * new method
+    * accepts `tags` and `case_date` parameters and added to the metadata dictionary
+    * if `case_date` provided, it's converted to ISO format and added to the metadata
+* `.query_case()` 
+    * modified method
+    * accepts `query_text`, `tags`, `similarity_threshold`, and `include`
+    * creates a `where_clause` to filter by tags if provided
+    * queries the case collection with a high `n_results` to get all potential matches
+    * filters results based on a similarity `threshold` of 0.7
+    * sorts the filtered results by `case_date` most recent first
+    * returns a dictionary with sorted documents, metadatas, and distances
+* `.query_case_documents()` and `.query_case_metadatas()`
+    * modified method
+    * use the new `query_case` method with modified parameters
+    * allow filtering by tags and similarity threshold
+
+Also I put one mermaid diagram below in case you are a visual learner like me wow i use my eyeballs to visually learn and perceive the universe.
+
+```mermaid
+classDiagram
+    class ChromaDB {
+        +PersistentClient client
+    }
+    class Collection {
+        +String name
+        +EmbeddingFunction embedding_function
+    }
+    class Document {
+        +String id
+        +String content
+        +Metadata metadata
+    }
+    class Metadata {
+        +List[String] tags
+        +String case_date
+        +Any other_metadata
+    }
+
+    ChromaDB "1" -- "3" Collection: contains
+    Collection "1" -- "*" Document: stores
+    Document "1" -- "1" Metadata: has
+
+    class ExperienceCollection {
+        +query()
+        +add()
+    }
+    class CaseCollection {
+        +query()
+        +add()
+    }
+    class LegalCollection {
+        +query()
+        +add()
+    }
+
+    Collection <|-- ExperienceCollection
+    Collection <|-- CaseCollection
+    Collection <|-- LegalCollection
+```
