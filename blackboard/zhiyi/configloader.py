@@ -24,7 +24,7 @@ def load_agent_config(config_path: str = "settings/agents.json") -> Dict[str, An
         # Validate structure for each agent
         for agent_type, agent_config in config.items():
             required_fields = {
-                'role_description', 
+                'role_description',
                 'phase_prompts', 
                 'default_config'
             }
@@ -39,7 +39,7 @@ def load_agent_config(config_path: str = "settings/agents.json") -> Dict[str, An
                 raise ValueError(
                     f"Phase prompts for {agent_type} must be a dictionary"
                 )
-            
+
             # Validate default config
             required_config = {'model', 'max_steps', 'max_history'}
             if not all(
@@ -50,7 +50,7 @@ def load_agent_config(config_path: str = "settings/agents.json") -> Dict[str, An
                 raise ValueError(
                     f"Missing required default config for {agent_type}: {missing}"
                 )
-                
+
         return config
         
     except FileNotFoundError:

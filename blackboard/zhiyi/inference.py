@@ -15,7 +15,8 @@ def curr_cost_est():
         "o1-preview": 15.00 / 1000000,
         "o1-mini": 3.00 / 1000000,
         "claude-3-5-sonnet": 3.00 / 1000000,
-        "deepseek-chat": 1.00 / 1000000,
+        "deepseek-chat": 1.10 / 1000000,
+        "deepseek-reasoner": 2.19 / 1000000,
         "o1": 15.00 / 1000000,
     }
     costmap_out = {
@@ -24,22 +25,25 @@ def curr_cost_est():
         "o1-preview": 60.00 / 1000000,
         "o1-mini": 12.00 / 1000000,
         "claude-3-5-sonnet": 12.00 / 1000000,
-        "deepseek-chat": 5.00 / 1000000,
+        "deepseek-chat": 5.50 / 1000000,
+        "deepseek-reasoner": 10.95 / 1000000,
         "o1": 60.00 / 1000000,
     }
     return sum([costmap_in[_]*TOKENS_IN[_] for _ in TOKENS_IN]) + sum([costmap_out[_]*TOKENS_OUT[_] for _ in TOKENS_OUT])
 
-def query_model(model_str, prompt, system_prompt, openai_api_key=None, anthropic_api_key=None, tries=5, timeout=5.0, temp=None, print_cost=True, version="1.5"):
+def query_model(model_str, prompt, system_prompt, openai_api_key=None, anthropic_api_key=None, deepseek_api_key=None, tries=5, timeout=5.0, temp=None, print_cost=True, version="1.5"):
     preloaded_api = os.getenv('OPENAI_API_KEY')
     if openai_api_key is None and preloaded_api is not None:
         openai_api_key = preloaded_api
-    if openai_api_key is None and anthropic_api_key is None:
+    if openai_api_key is None and anthropic_api_key is None and deepseek_api_key is None:
         raise Exception("No API key provided in query_model function")
     if openai_api_key is not None:
         openai.api_key = openai_api_key
         os.environ["OPENAI_API_KEY"] = openai_api_key
     if anthropic_api_key is not None:
         os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
+    if deepseek_api_key is not None:
+        os.environ["DEEPSEEK_API_KEY"] = deepseek_api_key
     for _ in range(tries):
         try:
             if model_str == "gpt-4o-mini" or model_str == "gpt4omini" or model_str == "gpt-4omini" or model_str == "gpt4o-mini":
@@ -99,28 +103,68 @@ def query_model(model_str, prompt, system_prompt, openai_api_key=None, anthropic
                         completion = client.chat.completions.create(
                             model="gpt-4o-2024-08-06", messages=messages, temperature=temp)
                 answer = completion.choices[0].message.content
-            elif model_str == "deepseek-chat":
-                model_str = "deepseek-chat"
+            elif model_str == "deepseek-chat" or model_str == "deepseek-reasoner":
+                # Normalize model name
+                if model_str == "deepseek-chat":
+                    deepseek_model = "deepseek-chat"
+                elif model_str == "deepseek-reasoner":
+                    deepseek_model = "deepseek-coder-instruct"
+                
+                # Format messages with system prompt
                 messages = [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}]
+                    {"role": "user", "content": prompt}
+                ]
+                
                 if version == "0.28":
                     raise Exception("Please upgrade your OpenAI version to use DeepSeek client")
                 else:
-                    deepseek_client = OpenAI(
-                        api_key=os.getenv('DEEPSEEK_API_KEY'),
-                        base_url="https://api.deepseek.com/v1"
-                    )
-                    if temp is None:
-                        completion = deepseek_client.chat.completions.create(
-                            model="deepseek-chat",
-                            messages=messages)
-                    else:
-                        completion = deepseek_client.chat.completions.create(
-                            model="deepseek-chat",
-                            messages=messages,
-                            temperature=temp)
-                answer = completion.choices[0].message.content
+                    try:
+                        # Initialize DeepSeek client
+                        deepseek_client = OpenAI(
+                            api_key=os.getenv('DEEPSEEK_API_KEY'),
+                            base_url="https://api.deepseek.com/v1"
+                        )
+                        
+                        # Create completion with appropriate parameters
+                        completion_params = {
+                            "model": deepseek_model,
+                            "messages": messages,
+                        }
+                        
+                        # Add temperature if specified
+                        if temp is not None:
+                            completion_params["temperature"] = temp
+                            
+                        # Make API call
+                        completion = deepseek_client.chat.completions.create(**completion_params)
+                        
+                        # Extract answer
+                        answer = completion.choices[0].message.content
+                        
+                        # Count tokens for cost tracking
+                        if model_str not in TOKENS_IN:
+                            TOKENS_IN[model_str] = 0
+                            TOKENS_OUT[model_str] = 0
+                            
+                        # DeepSeek uses cl100k_base tokenizer (same as GPT-4)
+                        encoding = tiktoken.encoding_for_model("cl100k_base")
+                        
+                        # Track token usage from API response if available
+                        if hasattr(completion, 'usage') and completion.usage is not None:
+                            TOKENS_IN[model_str] += completion.usage.prompt_tokens
+                            TOKENS_OUT[model_str] += completion.usage.completion_tokens
+                        else:
+                            # Fallback to estimation
+                            TOKENS_IN[model_str] += len(encoding.encode(system_prompt + prompt))
+                            TOKENS_OUT[model_str] += len(encoding.encode(answer))
+                            
+                        return answer
+                        
+                    except Exception as e:
+                        print(f"DeepSeek API error: {e}")
+                        time.sleep(timeout)
+                        continue
             elif model_str == "o1-mini":
                 model_str = "o1-mini"
                 messages = [

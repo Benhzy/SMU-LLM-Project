@@ -29,9 +29,10 @@ class BaseAgent:
     def __init__(
         self, 
         agent_type: str,
+        input_model: str,
         config: Dict[str, Any],
         notes: Optional[List[Dict[str, Any]]] = None,
-        openai_api_key: Optional[str] = None
+        api_key: Optional[str] = None
     ):
         """
         Initialize base agent
@@ -40,7 +41,7 @@ class BaseAgent:
             agent_type: Type of agent (sg_lawyer, us_lawyer)
             config: Configuration dictionary loaded from JSON
             notes: List of notes/instructions for the agent
-            openai_api_key: OpenAI API key
+            api_key: OpenAI API key
         """
         if agent_type not in config:
             raise ValueError(f"Invalid agent type: {agent_type}")
@@ -53,10 +54,10 @@ class BaseAgent:
         self.phase_prompts = agent_config['phase_prompts']
         self.notes = notes or []
         self.max_steps = default_config['max_steps']
-        self.model = default_config['model']
+        self.model = input_model or default_config['model']
         self.history: List[tuple[Optional[int], str]] = []
         self.prev_comm = ""
-        self.openai_api_key = openai_api_key
+        self.api_key = api_key
         self.max_hist_len = default_config['max_history']
         
         # Rate limiting
@@ -142,7 +143,7 @@ class BaseAgent:
                 model_str=self.model,
                 system_prompt=system_prompt,
                 prompt=user_prompt,
-                openai_api_key=self.openai_api_key,
+                api_key=self.api_key,
                 temp=temp
             )
         except Exception as e:
@@ -156,18 +157,20 @@ class BaseAgent:
         
         return model_resp
 
-class SGLawyer(BaseAgent):
+class Internal(BaseAgent):
     def __init__(
         self,
+        input_model: str,
         config: Dict[str, Any],
         notes: Optional[List[Dict[str, Any]]] = None,
-        openai_api_key: Optional[str] = None
+        api_key: Optional[str] = None
     ):
         super().__init__(
             agent_type='sg_lawyer',
+            input_model = input_model,
             config=config,
             notes=notes,
-            openai_api_key=openai_api_key
+            api_key=api_key
         )
         self.phases = [
             "statutory_analysis",
@@ -179,18 +182,20 @@ class SGLawyer(BaseAgent):
         self.sg_statutes = {}                           #TODO implement VDB for contextual knowledge
         self.sg_case_law = {}
 
-class USLawyer(BaseAgent):
+class External(BaseAgent):
     def __init__(
         self,
+        input_model: str,
         config: Dict[str, Any],
         notes: Optional[List[Dict[str, Any]]] = None,
-        openai_api_key: Optional[str] = None
+        api_key: Optional[str] = None
     ):
         super().__init__(
             agent_type='us_lawyer',
+            input_model = input_model,
             config=config,
             notes=notes,
-            openai_api_key=openai_api_key
+            api_key=api_key
         )
         self.phases = [
             "comparative_analysis",
@@ -207,8 +212,8 @@ class LegalReviewPanel:
     def __init__(
         self,
         agent_config: Dict[str, Any],
-        model: str = "gpt-4o-mini",
-        openai_api_key: Optional[str] = None,
+        input_model: str = "gpt-4o-mini",
+        api_key: Optional[str] = None,
         max_steps: int = 100,
         max_history: int = 15,
         notes: Optional[List[Dict[str, Any]]] = None,
@@ -219,14 +224,14 @@ class LegalReviewPanel:
         
         Args:
             model: Model to use for synthesis
-            openai_api_key: OpenAI API key
+            api_key: OpenAI API key
             max_steps: Maximum steps for agent analysis
             max_history: Maximum history entries to maintain
             notes: Additional notes or instructions for agents
             review_config_path: Path to review configuration file
         """
-        self.model = model
-        self.openai_api_key = openai_api_key
+        self.model = input_model
+        self.api_key = api_key
         
         # Load configurations
         try:
@@ -237,15 +242,17 @@ class LegalReviewPanel:
         
         # Initialize reviewers with configuration
         self.reviewers = [
-            SGLawyer(
+            Internal(
+                input_model = input_model,
                 config=agent_config,
                 notes=notes,
-                openai_api_key=openai_api_key
+                api_key=api_key
             ),
-            USLawyer(
+            External(
+                input_model = input_model,
                 config=agent_config,
                 notes=notes,
-                openai_api_key=openai_api_key
+                api_key=api_key
             )
         ]
 
@@ -311,7 +318,7 @@ class LegalReviewPanel:
                 model_str=self.model,
                 system_prompt=sys_prompt,
                 prompt=synthesis_prompt,
-                openai_api_key=self.openai_api_key
+                api_key=self.api_key
             )
             
             # Extract recommendations

@@ -2,7 +2,7 @@ import os
 import json
 import datetime
 from typing import Dict, List, Optional, Tuple
-from legalagents import SGLawyer, USLawyer, LegalReviewPanel
+from legalagents import Internal, External, LegalReviewPanel
 import argparse
 from configloader import load_agent_config
 
@@ -11,14 +11,14 @@ class LegalSimulationWorkflow:
     def __init__(
         self, 
         legal_question: str,
-        openai_api_key: str,
+        api_key: str,
         max_steps: int = 100,
         model_backbone: Optional[str] = None
     ):
         """Initialize the legal simulation workflow"""
         self.legal_question = legal_question
         self.max_steps = max_steps
-        self.openai_api_key = openai_api_key
+        self.api_key = api_key
         self.model_backbone = model_backbone or "gpt-4o-mini"
         
         # Load agent configuration
@@ -28,20 +28,23 @@ class LegalSimulationWorkflow:
             raise Exception(f"Error loading agent configuration: {str(e)}")
         
         # Initialize agents with configuration
-        self.sg_lawyer = SGLawyer(
+        self.sg_lawyer = Internal(
+            input_model = model_backbone,
             config=self.config,
-            openai_api_key=openai_api_key
+            api_key=api_key
         )
         
-        self.us_lawyer = USLawyer(
+        self.us_lawyer = External(
+            input_model = model_backbone,
             config=self.config,
-            openai_api_key=openai_api_key
+            api_key=api_key
         )
         
         # Initialize review panel
         self.review_panel = LegalReviewPanel(
+            input_model = model_backbone,
             agent_config=self.config,
-            openai_api_key=openai_api_key,
+            api_key=api_key,
             max_steps=max_steps
         )
         
@@ -231,6 +234,11 @@ def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description="Legal Analysis Simulation System")
     parser.add_argument(
+        '--model',
+        type=str,
+        help='Selected model for generation'
+    )
+    parser.add_argument(
         '--api-key',
         type=str,
         help='OpenAI API key'
@@ -246,13 +254,20 @@ def main():
     """Main execution flow"""
     # Parse arguments
     args = parse_arguments()
+
+    selected_model = args.model
+    if selected_model:
+        print(f"Model: {selected_model} has been selected")
+    else:
+        selected_model = None
+        print("No model has been selected, default models from Agent config will be used")
     
     # Get API key from arguments or environment
-    api_key = args.api_key or os.getenv('OPENAI_API_KEY')
+    api_key = args.api_key or os.getenv('api_key')
     if not api_key:
         raise ValueError(
-            "OpenAI API key must be provided via --api-key or "
-            "OPENAI_API_KEY environment variable"
+            "API key must be provided via --api-key or "
+            "api_key environment variable"
         )
     
     # Initialize question prompt system
@@ -271,7 +286,8 @@ def main():
     # Initialize workflow with human interaction based on args
     workflow = LegalSimulationWorkflow(
         legal_question=legal_question,
-        openai_api_key=api_key,
+        api_key=api_key,
+        model_backbone=selected_model,
     )
     
     # Execute analysis workflow
