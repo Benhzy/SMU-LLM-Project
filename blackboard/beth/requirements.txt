@@ -1,0 +1,2 @@
+chromadb==0.5.3
+InstructorEmbedding==1.0.0
