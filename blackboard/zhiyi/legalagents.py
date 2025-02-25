@@ -31,17 +31,19 @@ class BaseAgent:
         agent_type: str,
         input_model: str,
         config: Dict[str, Any],
-        notes: Optional[List[Dict[str, Any]]] = None,
-        api_key: Optional[str] = None
+        api_keys: Dict[str, str],
+        notes: Optional[List[Dict[str, Any]]] = None
+        
     ):
         """
         Initialize base agent
         
         Args:
             agent_type: Type of agent (sg_lawyer, us_lawyer)
+            input_model: Model to use for this agent
             config: Configuration dictionary loaded from JSON
+            api_keys: Dictionary of API keys by provider
             notes: List of notes/instructions for the agent
-            api_key: OpenAI API key
         """
         if agent_type not in config:
             raise ValueError(f"Invalid agent type: {agent_type}")
@@ -57,8 +59,12 @@ class BaseAgent:
         self.model = input_model or default_config['model']
         self.history: List[tuple[Optional[int], str]] = []
         self.prev_comm = ""
-        self.api_key = api_key
+        self.api_keys = api_keys or {}
         self.max_hist_len = default_config['max_history']
+        
+        # Get the appropriate API key based on the model
+        provider = get_provider(self.model)
+        self.api_key = self.api_keys.get(provider)
         
         # Rate limiting
         self.last_api_call = 0
@@ -161,16 +167,17 @@ class Internal(BaseAgent):
     def __init__(
         self,
         input_model: str,
+        api_keys: Dict[str, str],
         config: Dict[str, Any],
-        notes: Optional[List[Dict[str, Any]]] = None,
-        api_key: Optional[str] = None
+        notes: Optional[List[Dict[str, Any]]] = None
     ):
         super().__init__(
-            agent_type='sg_lawyer',
+            agent_type='internal',
             input_model = input_model,
             config=config,
-            notes=notes,
-            api_key=api_key
+            api_keys=api_keys,
+            notes=notes
+            
         )
         self.phases = [
             "statutory_analysis",
@@ -186,16 +193,16 @@ class External(BaseAgent):
     def __init__(
         self,
         input_model: str,
+        api_keys: Dict[str, str],
         config: Dict[str, Any],
         notes: Optional[List[Dict[str, Any]]] = None,
-        api_key: Optional[str] = None
     ):
         super().__init__(
-            agent_type='us_lawyer',
+            agent_type='external',
             input_model = input_model,
             config=config,
-            notes=notes,
-            api_key=api_key
+            api_keys=api_keys,
+            notes=notes
         )
         self.phases = [
             "comparative_analysis",
@@ -206,14 +213,15 @@ class External(BaseAgent):
         self.perspective = "us_law"
         self.us_constitution = {}                           #TODO implement VDB for contextual knowledge
         self.us_case_law = {}
+        
 class LegalReviewPanel:
     """Specialized review panel for Singapore legal analysis"""
     
     def __init__(
         self,
         agent_config: Dict[str, Any],
-        input_model: str = "gpt-4o-mini",
-        api_key: Optional[str] = None,
+        input_model: str,
+        api_keys: Dict[str, str],
         max_steps: int = 100,
         max_history: int = 15,
         notes: Optional[List[Dict[str, Any]]] = None,
@@ -231,8 +239,7 @@ class LegalReviewPanel:
             review_config_path: Path to review configuration file
         """
         self.model = input_model
-        self.api_key = api_key
-        
+
         # Load configurations
         try:
             with open(review_config_path, 'r') as f:
@@ -244,15 +251,15 @@ class LegalReviewPanel:
         self.reviewers = [
             Internal(
                 input_model = input_model,
+                api_keys = api_keys,
                 config=agent_config,
                 notes=notes,
-                api_key=api_key
             ),
             External(
                 input_model = input_model,
+                api_keys = api_keys,
                 config=agent_config,
                 notes=notes,
-                api_key=api_key
             )
         ]
 

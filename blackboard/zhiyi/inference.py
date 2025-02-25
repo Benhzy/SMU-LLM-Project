@@ -8,6 +8,18 @@ TOKENS_OUT = dict()
 
 encoding = tiktoken.get_encoding("cl100k_base")
 
+def get_provider(model):
+    provider_map = {
+        "gpt-4o": "openai",
+        "gpt-4o-mini": "openai",
+        "o1-preview": "anthropic",
+        "o1-mini": "anthropic",
+        "claude-3-5-sonnet": "anthropic",
+        "deepseek-chat": "deepseek",
+        "o1": "anthropic",
+    }
+    return provider_map.get(model, "unknown")
+
 def curr_cost_est():
     costmap_in = {
         "gpt-4o": 2.50 / 1000000,

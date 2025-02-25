@@ -11,14 +11,14 @@ class LegalSimulationWorkflow:
     def __init__(
         self, 
         legal_question: str,
-        api_key: str,
+        api_keys: dict,
         max_steps: int = 100,
         model_backbone: Optional[str] = None
     ):
         """Initialize the legal simulation workflow"""
         self.legal_question = legal_question
         self.max_steps = max_steps
-        self.api_key = api_key
+        self.api_keys = api_keys
         self.model_backbone = model_backbone or "gpt-4o-mini"
         
         # Load agent configuration
@@ -28,23 +28,23 @@ class LegalSimulationWorkflow:
             raise Exception(f"Error loading agent configuration: {str(e)}")
         
         # Initialize agents with configuration
-        self.sg_lawyer = Internal(
+        self.Internal = Internal(
             input_model = model_backbone,
             config=self.config,
-            api_key=api_key
+            api_keys=self.api_keys
         )
         
-        self.us_lawyer = External(
+        self.External = External(
             input_model = model_backbone,
             config=self.config,
-            api_key=api_key
+            api_keys=self.api_keys
         )
         
         # Initialize review panel
         self.review_panel = LegalReviewPanel(
             input_model = model_backbone,
             agent_config=self.config,
-            api_key=api_key,
+            api_keys=self.api_keys,
             max_steps=max_steps
         )
         
@@ -86,42 +86,42 @@ class LegalSimulationWorkflow:
                 "final_synthesis": None
             }
             
-            # Singapore Law Analysis
-            print("\nPerforming Singapore legal analysis...")
-            sg_analysis = {}
-            for phase in self.sg_lawyer.phases:
+            # Internal Law Analysis
+            print("\nPerforming Internal legal analysis...")
+            internal_analysis = {}
+            for phase in self.Internal.phases:
                 print(f"Phase: {phase}")
-                response = self.sg_lawyer.inference(
+                response = self.Internal.inference(
                     question=self.legal_question,
                     phase=phase,
                     step=1
                 )
-                sg_analysis[phase] = response
-            analysis_results["agent_outputs"]["sg_lawyer"] = sg_analysis
+                internal_analysis[phase] = response
+            analysis_results["agent_outputs"]["internal"] = internal_analysis
             
-            # US Law Comparative Analysis
-            print("\nPerforming US comparative analysis...")
-            us_analysis = {}
-            for phase in self.us_lawyer.phases:
+            # External Law Comparative Analysis
+            print("\nPerforming External comparative analysis...")
+            external_analysis = {}
+            for phase in self.External.phases:
                 print(f"Phase: {phase}")
-                response = self.us_lawyer.inference(
+                response = self.External.inference(
                     question=self.legal_question,
                     phase=phase,
                     step=1
                 )
-                us_analysis[phase] = response
-            analysis_results["agent_outputs"]["us_lawyer"] = us_analysis
+                external_analysis[phase] = response
+            analysis_results["agent_outputs"]["external"] = external_analysis
             
             # Synthesize reviews
             print("\nSynthesizing perspectives...")
             reviews = [
                 {
-                    "perspective": "singapore_law",
-                    "review": sg_analysis["review"]
+                    "perspective": "internal_law",
+                    "review": internal_analysis["review"]
                 },
                 {
-                    "perspective": "us_law",
-                    "review": us_analysis["review"]
+                    "perspective": "external_law",
+                    "review": external_analysis["review"]
                 }
             ]
             
@@ -140,12 +140,12 @@ class LegalSimulationWorkflow:
                 f.write(f"{'='*50}\n\n")
                 f.write(f"Question: {self.legal_question}\n\n")
                 f.write(f"Analysis Date: {self.timestamp}\n\n")
-                f.write(f"Singapore Law Analysis:\n")
+                f.write(f"Internal Law Analysis:\n")
                 f.write(f"{'-'*20}\n")
-                f.write(sg_analysis["review"])
-                f.write(f"\n\nUS Law Comparative Analysis:\n")
+                f.write(internal_analysis["review"])
+                f.write(f"\n\nExternal Law Comparative Analysis:\n")
                 f.write(f"{'-'*20}\n")
-                f.write(us_analysis["review"])
+                f.write(external_analysis["review"])
                 f.write(f"\n\nSynthesis:\n")
                 f.write(f"{'-'*20}\n")
                 f.write(synthesis["synthesis"])
@@ -154,7 +154,6 @@ class LegalSimulationWorkflow:
             
         except Exception as e:
             raise Exception(f"Error during legal analysis: {str(e)}")
-
 
 class LegalQuestionPrompt:
     """Handles user interaction for legal question input"""
@@ -239,11 +238,6 @@ def parse_arguments():
         help='Selected model for generation'
     )
     parser.add_argument(
-        '--api-key',
-        type=str,
-        help='OpenAI API key'
-    )
-    parser.add_argument(
         '--interactive',
         action='store_true',
         help='Enable interactive mode with detailed feedback'
@@ -262,14 +256,18 @@ def main():
         selected_model = None
         print("No model has been selected, default models from Agent config will be used")
     
-    # Get API key from arguments or environment
-    api_key = args.api_key or os.getenv('api_key')
-    if not api_key:
+    # Get API keys from environment
+    api_keys = {
+        'openai': os.getenv('OPENAI_API_KEY'),
+        'deepseek': os.getenv('DEEPSEEK_API_KEY'),
+        'anthropic': os.getenv('ANTHROPIC_API_KEY')
+    }
+
+    if not any(api_keys.values()):
         raise ValueError(
-            "API key must be provided via --api-key or "
-            "api_key environment variable"
+            "An API key must be provided via environment variable"
         )
-    
+
     # Initialize question prompt system
     prompter = LegalQuestionPrompt()
     
@@ -286,7 +284,7 @@ def main():
     # Initialize workflow with human interaction based on args
     workflow = LegalSimulationWorkflow(
         legal_question=legal_question,
-        api_key=api_key,
+        api_keys=api_keys,
         model_backbone=selected_model,
     )
     
