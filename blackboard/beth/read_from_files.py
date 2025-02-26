@@ -1,6 +1,7 @@
 import extract_from_pdf as efp
 import os
 import updated_db as udb
+import time
 
 client = udb.db("MAIN")
 internal_collection = client._create_collection("INTERNAL")
@@ -10,6 +11,8 @@ internal_folder_path = "./INTERNAL/"
 external_folder_path = "./EXTERNAL/"
 
 num_results = 10000000000000000
+
+testing = True
 
 # NOTE: You need an ID to upload documents, so I am currently autogenerating it with uuid4()
 
@@ -46,8 +49,15 @@ def folder_insert_in_db_and_delete(collection_name): #chosen type affects the da
         #INSERT INTO DB
         if collection_name == "INTERNAL":
             add_to_internal_db(words, id=None, metadata=None)
+            print("Added to internal db")
+            if testing:
+                time.sleep(1)
+
         elif collection_name == "EXTERNAL":
             add_to_external_db(words, id=None, metadata=None)
+            print("Added to external db")
+            if testing:
+                time.sleep(1)
         else:
             return "Error: Invalid collection name."    
 
@@ -56,5 +66,6 @@ def folder_insert_in_db_and_delete(collection_name): #chosen type affects the da
         
     return True
 
-print(query_external_db("international legal trends"))
 
+print(folder_insert_in_db_and_delete("INTERNAL"))
+print(folder_insert_in_db_and_delete("EXTERNAL"))
