@@ -15,3 +15,8 @@ ENV/
 .cache/
 .checkpoints/
 
+# folders for db testing
+./INTERNAL/
+./EXTERNAL/
+
+./db/MAIN/

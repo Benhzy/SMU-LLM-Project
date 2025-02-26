@@ -6,6 +6,7 @@ from chromadb.utils import embedding_functions
 import uuid
 
 num_results =  10000000000000000 # change this value, or we can add something that will change this value to add more results to the retrieval
+char_length = 3000 #length of the text that will be used to create the embedding FOR NOW.
 
 class db:
     def __init__(self, client_name, EmbeddingModelName="BAAI/bge-m3", device="cpu"): 
@@ -34,12 +35,12 @@ class db:
 
     def add_to_internal_collection(self, id, document, metadata=None):
         self.internal_collection.add(
-            documents=[document], metadatas=[metadata] if metadata else None, ids=[id] if id else uuid.uuid4()
+            documents=[document[:char_length]], metadatas=[metadata] if metadata else None, ids=[id] if id else str(uuid.uuid4())
         )
 
     def add_to_external_collection(self, id, document, metadata=None):
         self.external_collection.add(
-            documents=[document], metadatas=[metadata] if metadata else None, ids=[id] if id else uuid.uuid4()
+            documents=[document[:char_length]], metadatas=[metadata] if metadata else None, ids=[id] if id else str(uuid.uuid4())
         )
 
     def filter_results(result, similarity_threshold=0.7): # this is the result from the query collection functions
