@@ -15,7 +15,7 @@ ENV/
 .cache/
 .checkpoints/
 
-# folders for db testing
+# folders for db testing. main is the name of the client!
 ./INTERNAL/
 ./EXTERNAL/
 

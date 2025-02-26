@@ -80,10 +80,6 @@ class db:
             #includes are either documents, queries, metadatas, or distances
         )
         return result
-
-    def query_collection_documents(self, query_text, tags=None, similarity_threshold=0.7):
-        result = self.query_case(query_text, tags, similarity_threshold, include=["documents"])
-        return result["documents"]
     
     def query_internal_documents(self, query_text, tags=None, similarity_threshold=0.7):
         result = self.query_internal_collection(query_text, tags, similarity_threshold, include=["documents"])
@@ -99,8 +95,4 @@ class db:
     
     def query_external_metadatas(self, query_text, tags=None, similarity_threshold=0.7):
         result = self.query_external_collection(query_text, tags, similarity_threshold, include=["metadatas"])
-        return result["metadatas"]
-
-    def query_collection_metadatas(self, query_text, tags=None, similarity_threshold=0.7):
-        result = self.query_case(query_text, tags, similarity_threshold, include=["metadatas"])
         return result["metadatas"]
