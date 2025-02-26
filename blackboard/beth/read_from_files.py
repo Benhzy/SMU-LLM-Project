@@ -1,0 +1,51 @@
+import extract_from_pdf as efp
+import os
+import updated_db as udb
+
+client = udb.db("MAIN")
+internal_collection = client._create_collection("INTERNAL")
+external_collection = client._create_collection("EXTERNAL")
+
+folder_path = ""
+num_results = 10000000000000000
+
+# NOTE: You need an ID to upload documents, so I am currently autogenerating it with uuid4()
+
+def add_to_internal_db(document, id=None, metadata=None):
+    
+    return client.add_to_internal_collection(id, document, metadata=None)
+
+def add_to_external_db(document, id=None, metadata=None):
+    
+    return client.add_to_external_collection(id, document, metadata=None)
+    
+def read_from_internal_db(query, num_results=num_results):
+    return client.filter_results(internal_collection.query(query_texts=[query], n_results=num_results))
+
+def read_from_external_db(query, num_results=num_results):
+    return client.filter_results(external_collection.query(query_texts=[query], n_results=num_results))
+
+def folder_insert_in_db_and_delete(folder_path, collection_name): #chosen type affects the database the function will add files to
+
+    # Get a list of all files in the folder
+    files = os.listdir(folder_path)
+    if not folder_path:
+        return "Error: No folder path provided."
+    # Iterate over the files and remove each one
+    for file in files:
+        file_path = os.path.join(folder_path, file)
+        words = efp.extract_text_from_pdf(file_path)
+
+        #INSERT INTO DB
+        if collection_name == "INTERNAL":
+            add_to_internal_db(words, id=None, metadata=None)
+        elif collection_name == "EXTERNAL":
+            add_to_external_db(words, id=None, metadata=None)
+        else:
+            return "Error: Invalid collection name."    
+
+        # REMOVE FILE
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    
+    return True
