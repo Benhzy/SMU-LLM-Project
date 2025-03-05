@@ -4,42 +4,6 @@ import tiktoken
 import subprocess
 
 
-def compile_latex(latex_code, compile=True, output_filename="output.pdf", timeout=30):
-    latex_code = latex_code.replace(
-        r"\documentclass{article}",
-        "\\documentclass{article}\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{array}\n\\usepackage{algorithm}\n\\usepackage{algorithmicx}\n\\usepackage{algpseudocode}\n\\usepackage{booktabs}\n\\usepackage{colortbl}\n\\usepackage{color}\n\\usepackage{enumitem}\n\\usepackage{fontawesome5}\n\\usepackage{float}\n\\usepackage{graphicx}\n\\usepackage{hyperref}\n\\usepackage{listings}\n\\usepackage{makecell}\n\\usepackage{multicol}\n\\usepackage{multirow}\n\\usepackage{pgffor}\n\\usepackage{pifont}\n\\usepackage{soul}\n\\usepackage{sidecap}\n\\usepackage{subcaption}\n\\usepackage{titletoc}\n\\usepackage[symbol]{footmisc}\n\\usepackage{url}\n\\usepackage{wrapfig}\n\\usepackage{xcolor}\n\\usepackage{xspace}")
-    #print(latex_code)
-    dir_path = "research_dir/tex"
-    tex_file_path = os.path.join(dir_path, "temp.tex")
-    # Write the LaTeX code to the .tex file in the specified directory
-    with open(tex_file_path, "w") as f:
-        f.write(latex_code)
-
-    if not compile:
-        return f"Compilation successful"
-
-    # Compiling the LaTeX code using pdflatex with non-interactive mode and timeout
-    try:
-        result = subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", "temp.tex"],
-            check=True,                   # Raises a CalledProcessError on non-zero exit codes
-            stdout=subprocess.PIPE,        # Capture standard output
-            stderr=subprocess.PIPE,        # Capture standard error
-            timeout=timeout,               # Timeout for the process
-            cwd=dir_path
-        )
-
-        # If compilation is successful, return the success message
-        return f"Compilation successful: {result.stdout.decode('utf-8')}"
-
-    except subprocess.TimeoutExpired:
-        # If the compilation takes too long, return a timeout message
-        return "[CODE EXECUTION ERROR]: Compilation timed out after {} seconds".format(timeout)
-    except subprocess.CalledProcessError as e:
-        # If there is an error during LaTeX compilation, return the error message
-        return f"[CODE EXECUTION ERROR]: Compilation failed: {e.stderr.decode('utf-8')} {e.output.decode('utf-8')}. There was an error in your latex."
-
-
 def count_tokens(messages, model="gpt-4"):
     enc = tiktoken.encoding_for_model(model)
     num_tokens = sum([len(enc.encode(message["content"])) for message in messages])
