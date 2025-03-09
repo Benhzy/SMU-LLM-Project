@@ -2,8 +2,7 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
 import json
 import time
-from utils import *
-from inference import *
+from helper.inference import *
 
 
 @dataclass
@@ -38,7 +37,7 @@ class BaseAgent:
         Initialize base agent
         
         Args:
-            agent_type: Type of agent (sg_lawyer, us_lawyer)
+            agent_type: Type of agent (internal, external etc)
             input_model: Model to use for this agent
             config: Configuration dictionary loaded from JSON
             api_keys: Dictionary of API keys by provider
@@ -103,7 +102,7 @@ class BaseAgent:
     ) -> str:
         """
         Args:
-            question: The legal question to analyze
+            question: The legal question to analyse
             phase: Current phase of analysis
             step: Current step number
             feedback: Previous feedback
@@ -135,7 +134,7 @@ class BaseAgent:
         user_prompt = (
             f"History: {history_str}\n{'~' * 10}\n"
             f"Current Step #{step}, Phase: {phase}\n"
-            f"[Objective] Your goal is to analyze the following legal question: "
+            f"[Objective] Your goal is to analyse the following legal question: "
             f"{question}\n"
             f"Feedback: {feedback}\nNotes: {notes_str}\n"
             f"Your previous response was: {self.prev_comm}. "
@@ -184,7 +183,7 @@ class Internal(BaseAgent):
             "practice_implications",
             "review"
         ]
-        self.perspective = "singapore_law"
+        self.perspective = "internal_law"
         self.sg_statutes = {}                           #TODO implement VDB for contextual knowledge
         self.sg_case_law = {}
 
@@ -209,7 +208,7 @@ class External(BaseAgent):
             "practice_insights",
             "review"
         ]
-        self.perspective = "us_law"
+        self.perspective = "external_law"
         self.us_constitution = {}                           #TODO implement VDB for contextual knowledge
         self.us_case_law = {}
         
@@ -237,8 +236,9 @@ class LegalReviewPanel:
             notes: Additional notes or instructions for agents
             review_config_path: Path to review configuration file
         """
-        self.model = input_model
-
+        self.model = input_model if input_model is not None else "gpt-4o-mini"
+        provider = get_provider(self.model)
+        self.api_key = api_keys.get(provider)
         # Load configurations
         try:
             with open(review_config_path, 'r') as f:
@@ -292,7 +292,7 @@ class LegalReviewPanel:
             Dictionary containing synthesized analysis
         """
         # Validate required perspectives
-        required_perspectives = {"singapore_law", "us_law"}
+        required_perspectives = {"internal_law", "external_law"}
         provided_perspectives = {r["perspective"] for r in reviews}
         
         if not required_perspectives.issubset(provided_perspectives):
@@ -301,10 +301,10 @@ class LegalReviewPanel:
         
         # Extract perspectives
         synthesis = {
-            "sg_law_perspective": next(r["review"] for r in reviews 
-                                    if r["perspective"] == "singapore_law"),
-            "us_law_perspective": next(r["review"] for r in reviews 
-                                    if r["perspective"] == "us_law"),
+            "internal_perspective": next(r["review"] for r in reviews 
+                                    if r["perspective"] == "internal_law"),
+            "external_perspective": next(r["review"] for r in reviews 
+                                    if r["perspective"] == "external_law"),
             "requires_revision": False,
             "synthesis": "",
             "recommendations": [],
@@ -315,8 +315,8 @@ class LegalReviewPanel:
             # Get prompts from config
             sys_prompt = self.review_config["synthesis"]["system_prompt"]
             synthesis_prompt = self.review_config["synthesis"]["synthesis_template"].format(
-                sg_law_perspective=synthesis["sg_law_perspective"],
-                us_law_perspective=synthesis["us_law_perspective"]
+                internal_perspective=synthesis["internal_perspective"],
+                external_perspective=synthesis["external_perspective"]
             )
             
             # Generate synthesis

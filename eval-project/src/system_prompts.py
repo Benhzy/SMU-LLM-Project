@@ -15,7 +15,7 @@ def sys_prompt(key):
         "ans_tort_qns": """
             Background: I am a Singapore lawyer specialized in the Law of Torts.
 
-            Task: Analyze provided hypothetical scenarios under Singapore Tort Law, addressing specific questions with detailed legal principles and relevant case law.
+            Task: analyse provided hypothetical scenarios under Singapore Tort Law, addressing specific questions with detailed legal principles and relevant case law.
 
             Instructions:
 

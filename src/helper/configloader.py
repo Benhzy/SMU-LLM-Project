@@ -16,7 +16,7 @@ def load_agent_config(config_path: str = "settings/agents.json") -> Dict[str, An
             config = json.load(f)
             
         # Validate required agent types
-        required_agents = {'sg_lawyer', 'us_lawyer'}
+        required_agents = {'internal', 'external'}
         if not all(agent in config for agent in required_agents):
             missing = required_agents - set(config.keys())
             raise ValueError(f"Missing required agent configurations: {missing}")
@@ -24,7 +24,7 @@ def load_agent_config(config_path: str = "settings/agents.json") -> Dict[str, An
         # Validate structure for each agent
         for agent_type, agent_config in config.items():
             required_fields = {
-                'role_description',
+                'role_description', 
                 'phase_prompts', 
                 'default_config'
             }
@@ -39,7 +39,7 @@ def load_agent_config(config_path: str = "settings/agents.json") -> Dict[str, An
                 raise ValueError(
                     f"Phase prompts for {agent_type} must be a dictionary"
                 )
-
+            
             # Validate default config
             required_config = {'model', 'max_steps', 'max_history'}
             if not all(
@@ -50,7 +50,7 @@ def load_agent_config(config_path: str = "settings/agents.json") -> Dict[str, An
                 raise ValueError(
                     f"Missing required default config for {agent_type}: {missing}"
                 )
-
+                
         return config
         
     except FileNotFoundError:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         print("Successfully loaded agent configuration")
         
         # Modify configuration if needed
-        # config['sg_lawyer']['role_description'] = "Updated description..."
+        # config['internal']['role_description'] = "Updated description..."
         
         # Save modified config
         # save_agent_config(config)

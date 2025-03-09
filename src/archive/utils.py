@@ -3,7 +3,6 @@ import shutil
 import tiktoken
 import subprocess
 
-
 def count_tokens(messages, model="gpt-4"):
     enc = tiktoken.encoding_for_model(model)
     num_tokens = sum([len(enc.encode(message["content"])) for message in messages])
@@ -26,7 +25,6 @@ def remove_directory(dir_path):
     else:
         print(f"Directory {dir_path} does not exist or is not a directory.")
 
-
 def save_to_file(location, filename, data):
     """Utility function to save data as plain text."""
     filepath = os.path.join(location, filename)
@@ -36,7 +34,6 @@ def save_to_file(location, filename, data):
         print(f"Data successfully saved to {filepath}")
     except Exception as e:
         print(f"Error saving file {filename}: {e}")
-
 
 def clip_tokens(messages, model="gpt-4", max_tokens=100000):
     enc = tiktoken.encoding_for_model(model)
@@ -73,8 +70,6 @@ def clip_tokens(messages, model="gpt-4", max_tokens=100000):
             clipped_messages.append({"role": message["role"], "content": clipped_message})
             current_idx += message_token_count
     return clipped_messages
-
-
 
 def extract_prompt(text, word):
     code_block_pattern = rf"```{word}(.*?)```"

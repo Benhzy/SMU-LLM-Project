@@ -4,8 +4,10 @@ import datetime
 from typing import Dict, List, Optional, Tuple
 from legalagents import Internal, External, LegalReviewPanel
 import argparse
-from configloader import load_agent_config
+from helper.configloader import load_agent_config
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class LegalSimulationWorkflow:
     def __init__(
@@ -72,89 +74,122 @@ class LegalSimulationWorkflow:
             except Exception as e:
                 raise Exception(f"Error saving {agent_name} output: {str(e)}")
 
-    def perform_legal_analysis(self) -> None:
-        """Execute the complete legal analysis workflow"""
-        try:
-            print("\nInitiating legal analysis workflow...")
-            
-            # Store all analysis results
-            analysis_results = {
-                "legal_question": self.legal_question,
-                "timestamp": self.timestamp,
-                "model": self.model_backbone,
-                "agent_outputs": {},
-                "final_synthesis": None
-            }
-            
-            # Internal Law Analysis
-            print("\nPerforming Internal legal analysis...")
-            internal_analysis = {}
-            for phase in self.Internal.phases:
-                print(f"Phase: {phase}")
-                response = self.Internal.inference(
-                    question=self.legal_question,
-                    phase=phase,
-                    step=1
-                )
-                internal_analysis[phase] = response
-            analysis_results["agent_outputs"]["internal"] = internal_analysis
-            
-            # External Law Comparative Analysis
-            print("\nPerforming External comparative analysis...")
-            external_analysis = {}
-            for phase in self.External.phases:
-                print(f"Phase: {phase}")
-                response = self.External.inference(
-                    question=self.legal_question,
-                    phase=phase,
-                    step=1
-                )
-                external_analysis[phase] = response
-            analysis_results["agent_outputs"]["external"] = external_analysis
-            
-            # Synthesize reviews
-            print("\nSynthesizing perspectives...")
-            reviews = [
-                {
-                    "perspective": "internal_law",
-                    "review": internal_analysis["review"]
-                },
-                {
-                    "perspective": "external_law",
-                    "review": external_analysis["review"]
-                }
-            ]
-            
-            synthesis = self.review_panel.synthesize_reviews(reviews)
-            analysis_results["final_synthesis"] = synthesis
-            
-            # Save all results
-            print("\nSaving analysis results...")
-            self._save_analysis_results(analysis_results)
-            self._save_agent_outputs(analysis_results["agent_outputs"])
-            
-            # Create summary file
-            summary_file = os.path.join(self.results_dir, "analysis_summary.txt")
-            with open(summary_file, 'w') as f:
-                f.write(f"Legal Analysis Summary\n")
-                f.write(f"{'='*50}\n\n")
-                f.write(f"Question: {self.legal_question}\n\n")
-                f.write(f"Analysis Date: {self.timestamp}\n\n")
-                f.write(f"Internal Law Analysis:\n")
-                f.write(f"{'-'*20}\n")
-                f.write(internal_analysis["review"])
-                f.write(f"\n\nExternal Law Comparative Analysis:\n")
-                f.write(f"{'-'*20}\n")
-                f.write(external_analysis["review"])
-                f.write(f"\n\nSynthesis:\n")
-                f.write(f"{'-'*20}\n")
-                f.write(synthesis["synthesis"])
-                
-            print(f"\nAnalysis complete! Results saved in: {self.results_dir}")
-            
-        except Exception as e:
-            raise Exception(f"Error during legal analysis: {str(e)}")
+import time
+import os
+from datetime import datetime
 
+def perform_legal_analysis(self) -> None:
+    """Execute the complete legal analysis workflow with timing display"""
+    try:
+        print("\nInitiating legal analysis workflow...")
+        start_time_total = time.time()
+        
+        # Store all analysis results
+        analysis_results = {
+            "legal_question": self.legal_question,
+            "timestamp": self.timestamp,
+            "model": self.model_backbone,
+            "agent_outputs": {},
+            "final_synthesis": None
+        }
+        
+        # Internal Law Analysis
+        print("\nPerforming Internal legal analysis...")
+        internal_analysis = {}
+        
+        for phase in self.Internal.phases:
+            print(f"Phase: {phase}")
+            phase_start = time.time()
+            
+            response = self.Internal.inference(
+                question=self.legal_question,
+                phase=phase,
+                step=1
+            )
+            
+            phase_end = time.time()
+            elapsed_time = phase_end - phase_start
+            
+            print(f"Completed {phase} in {elapsed_time:.2f} seconds")
+            internal_analysis[phase] = response
+            
+        analysis_results["agent_outputs"]["internal"] = internal_analysis
+        
+        # External Law Comparative Analysis
+        print("\nPerforming External comparative analysis...")
+        external_analysis = {}
+        
+        for phase in self.External.phases:
+            print(f"Phase: {phase}")
+            phase_start = time.time()
+            
+            response = self.External.inference(
+                question=self.legal_question,
+                phase=phase,
+                step=1
+            )
+            
+            phase_end = time.time()
+            elapsed_time = phase_end - phase_start
+            
+            print(f"Completed {phase} in {elapsed_time:.2f} seconds")
+            external_analysis[phase] = response
+            
+        analysis_results["agent_outputs"]["external"] = external_analysis
+        
+        # Synthesize reviews
+        print("\nSynthesizing perspectives...")
+        synthesis_start = time.time()
+        
+        reviews = [
+            {
+                "perspective": "internal_law",
+                "review": internal_analysis["review"]
+            },
+            {
+                "perspective": "external_law",
+                "review": external_analysis["review"]
+            }
+        ]
+        
+        synthesis = self.review_panel.synthesize_reviews(reviews)
+        analysis_results["final_synthesis"] = synthesis
+        
+        synthesis_end = time.time()
+        synthesis_time = synthesis_end - synthesis_start
+        print(f"Completed synthesis in {synthesis_time:.2f} seconds")
+        
+        # Calculate total time
+        total_time = time.time() - start_time_total
+        
+        # Save all results
+        print("\nSaving analysis results...")
+        self._save_analysis_results(analysis_results)
+        self._save_agent_outputs(analysis_results["agent_outputs"])
+        
+        # Create summary file
+        summary_file = os.path.join(self.results_dir, "analysis_summary.txt")
+        with open(summary_file, 'w') as f:
+            f.write(f"Legal Analysis Summary\n")
+            f.write(f"{'='*50}\n\n")
+            f.write(f"Question: {self.legal_question}\n\n")
+            f.write(f"Analysis Date: {self.timestamp}\n\n")
+            f.write(f"Internal Law Analysis:\n")
+            f.write(f"{'-'*20}\n")
+            f.write(internal_analysis["review"])
+            f.write(f"\n\nExternal Law Comparative Analysis:\n")
+            f.write(f"{'-'*20}\n")
+            f.write(external_analysis["review"])
+            f.write(f"\n\nSynthesis:\n")
+            f.write(f"{'-'*20}\n")
+            f.write(synthesis["synthesis"])
+            
+        print(f"\nAnalysis complete! Results saved in: {self.results_dir}")
+        print(f"Total analysis time: {total_time:.2f} seconds")
+        
+    except Exception as e:
+        raise Exception(f"Error during legal analysis: {str(e)}")
+    
 class LegalQuestionPrompt:
     """Handles user interaction for legal question input"""
     
@@ -164,7 +199,7 @@ class LegalQuestionPrompt:
         print("\n" + "=" * 80)
         print("Welcome to the Legal Analysis Simulation System")
         print("=" * 80)
-        print("\nThis system analyzes legal hypotheticals from multiple perspectives:")
+        print("\nThis system analyses legal hypotheticals from multiple perspectives:")
         print("  • Singapore Legal Practitioner")
         print("  • US Legal Comparative Analysis")
         print("\nThe system will guide you through formulating your legal question.")
@@ -225,9 +260,9 @@ class LegalQuestionPrompt:
                 print("and specific details to enable a thorough analysis.")
                 continue
                 
-            confirm = input("\nIs this the question you'd like to analyze? (y/n): ")
-            if confirm.lower() == 'y':
-                return question
+            # confirm = input("\nIs this the question you'd like to analyse? (y/n): ")
+            # if confirm.lower() == 'y':
+            return question
 
 def parse_arguments():
     """Parse command line arguments"""
@@ -236,6 +271,11 @@ def parse_arguments():
         '--model',
         type=str,
         help='Selected model for generation'
+    )
+    parser.add_argument(
+        "--question",
+        type=str,
+        help="The legal question to analyse"
     )
     parser.add_argument(
         '--interactive',
@@ -256,13 +296,18 @@ def main():
         selected_model = None
         print("No model has been selected, default models from Agent config will be used")
     
+    # Get question from command line arguments
+    legal_question = args.question
+    if not legal_question:
+        raise ValueError("A legal question must be provided via command line arguments")
+    
     # Get API keys from environment
     api_keys = {
         'openai': os.getenv('OPENAI_API_KEY'),
         'deepseek': os.getenv('DEEPSEEK_API_KEY'),
         'anthropic': os.getenv('ANTHROPIC_API_KEY')
     }
-
+    print(api_keys)
     if not any(api_keys.values()):
         raise ValueError(
             "An API key must be provided via environment variable"
@@ -273,10 +318,6 @@ def main():
     
     # Display welcome and guidelines
     prompter.display_welcome_message()
-    prompter.display_question_guidelines()
-    
-    # Get legal question from user
-    legal_question = prompter.get_legal_question()
     
     print("\nInitializing analysis workflow...")
     print("=" * 80)
@@ -299,6 +340,6 @@ def main():
         print(f"\nError during analysis: {str(e)}")
         print("Please check the error message and try again.")
         return
-
+    
 if __name__ == "__main__":
     main()
