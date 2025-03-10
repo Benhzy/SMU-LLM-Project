@@ -2,14 +2,14 @@ import os
 import json
 import datetime
 import argparse
-from typing import Dict
+from typing import Dict, Optional
 from agent_clients import AgentClient
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class LegalSimulationWorkflow:
-    def __init__(self, legal_question: str, api_keys: dict, model_backbone: str = "gpt-4o-mini"):
+    def __init__(self, legal_question: str, api_keys: dict, model_backbone: Optional[str] = None):
         """
         initialize the legal simulation workflow
         """

@@ -15,7 +15,7 @@ class AgentClient:
         self.name = name
         self.agent = agent_class(
             input_model=model_str,
-            api_keys=api_keys or {"openai": os.getenv("OPENAI_API_KEY")},
+            api_keys=api_keys,
             config=config,
         )
         self.vdb_manager = db(client_name=name, allowed_collections=allowed_collections)

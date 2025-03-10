@@ -52,6 +52,7 @@ class BaseAgent:
         self.agent_type = agent_type
         self.role_desc = agent_config['role_description']
         self.phase_prompts = agent_config['phase_prompts']
+        self.phases = list(self.phase_prompts.keys())
         self.notes = notes or []
         self.max_steps = default_config['max_steps']
         self.model = input_model or default_config['model']
@@ -177,12 +178,7 @@ class Internal(BaseAgent):
             notes=notes
             
         )
-        self.phases = [
-            "statutory_analysis",
-            "case_law_review",
-            "practice_implications",
-            "review"
-        ]
+        
         self.perspective = "internal_law"
         self.sg_statutes = {}                           #TODO implement VDB for contextual knowledge
         self.sg_case_law = {}
@@ -202,12 +198,7 @@ class External(BaseAgent):
             api_keys=api_keys,
             notes=notes
         )
-        self.phases = [
-            "comparative_analysis",
-            "federal_state_review",
-            "practice_insights",
-            "review"
-        ]
+        
         self.perspective = "external_law"
         self.us_constitution = {}                           #TODO implement VDB for contextual knowledge
         self.us_case_law = {}
