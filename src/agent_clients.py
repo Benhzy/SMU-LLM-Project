@@ -19,6 +19,9 @@ class AgentClient:
             config=config,
         )
         self.vdb_manager = db(client_name=name, allowed_collections=allowed_collections)
+        self.phases = self.agent.phases 
+        # if im not wrong this is currently hardcoded within legalagents right if 
+        # we want can add it as an additional Aparam to the AgentClient constructor
 
     def query(self, collection_name, query_text, **kwargs):
         """
@@ -60,3 +63,32 @@ class AgentClient:
             include=["metadatas"],
             similarity_threshold=similarity_threshold
         )["metadatas"]
+
+    def perform_phase_analysis(self, question: str, phase: str, step: int = 1, feedback: str = "", temp: float = None):
+        """
+        performs analysis for a given structured phase 
+        """
+        if phase not in self.phases:
+            raise ValueError(f"Invalid phase '{phase}'. Valid phases are: {self.phases}")
+        return self.agent.inference(
+            question=question,
+            phase=phase,
+            step=step,
+            feedback=feedback,
+            temp=temp
+        )
+
+    def perform_full_structured_analysis(self, question: str):
+        """
+        just a convenienence method that performs all structured phases sequentially and returns aggregated results
+        """
+        results = {}
+        for idx, phase in enumerate(self.phases, start=1):
+            print(f"\nPerforming '{phase}' analysis (Step {idx}/{len(self.phases)})...")
+            response = self.perform_phase_analysis(
+                question=question,
+                phase=phase,
+                step=idx
+            )
+            results[phase] = response
+        return results
