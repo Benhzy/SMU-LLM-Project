@@ -8,6 +8,9 @@ char_length = 3000
 
 class db:
     def __init__(self, client_name, allowed_collections, EmbeddingModelName="BAAI/bge-m3", device="cpu"):
+        """
+        initialize a db instance
+        """
         self.client_name = client_name
         self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=EmbeddingModelName, device=device
@@ -18,17 +21,26 @@ class db:
         }
 
     def _create_client(self):
+        """
+        create a chromadb client instance for the given client_name
+        """
         client_path = os.path.join("db", self.client_name)
         os.makedirs(client_path, exist_ok=True)
         return chromadb.PersistentClient(path=client_path)
 
     def _create_collection(self, collection_name):
+        """
+        create a chromadb collection instance for the given collection_name
+        """
         return self.client.get_or_create_collection(
             name=f"{self.client_name}_{collection_name}",
             embedding_function=self.embedding_fn,
         )
 
     def add_to_collection(self, collection_name, id=None, document="", metadata=None):
+        """
+        add a document to a specific collection
+        """
         if collection_name not in self.collections:
             raise ValueError(f"Collection '{collection_name}' not accessible.")
         collection = self.collections[collection_name]
@@ -40,6 +52,9 @@ class db:
 
     def query_collection(self, collection_name, query_text, tags=None, n_results=num_results,
                          include=["documents", "metadatas", "distances"], similarity_threshold=0.7):
+        """
+        queries a specific collection in the chromadb database
+        """
         if collection_name not in self.collections:
             raise ValueError(f"Collection '{collection_name}' not accessible.")
         where_clause = {}
@@ -55,6 +70,9 @@ class db:
 
     @staticmethod
     def filter_results(result, similarity_threshold=0.7):
+        """
+        filters and sorts query results based on a similarity threshold and case date
+        """
         filtered_results = []
         for doc, metadata, distance in zip(result["documents"][0], result["metadatas"][0], result["distances"][0]):
             if 1 - distance >= similarity_threshold:

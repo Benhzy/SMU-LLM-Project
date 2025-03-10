@@ -1,4 +1,4 @@
-from vdb_manager import VDBManager
+from vdb_manager import db
 from legalagents import Internal, External
 from helper.configloader import load_agent_config
 import os
@@ -18,7 +18,7 @@ class AgentClient:
             api_keys=api_keys or {"openai": os.getenv("OPENAI_API_KEY")},
             config=config,
         )
-        self.vdb_manager = VDBManager(client_name=name, allowed_collections=allowed_collections)
+        self.vdb_manager = db(client_name=name, allowed_collections=allowed_collections)
 
     def query(self, collection_name, query_text, **kwargs):
         """
