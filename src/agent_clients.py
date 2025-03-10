@@ -1,5 +1,5 @@
 from vdb_manager import db
-from legalagents import Internal, External
+from legalagents import Internal, External, LegalReviewPanel
 from helper.configloader import load_agent_config
 import os
 
@@ -19,9 +19,11 @@ class AgentClient:
             config=config,
         )
         self.vdb_manager = db(client_name=name, allowed_collections=allowed_collections)
-        self.phases = self.agent.phases 
-        # if im not wrong this is currently hardcoded within legalagents right if 
+        self.phases = self.agent.phases  
+        # @zhiyi
+        # if im not wrong the phases are currently hardcoded within legalagents right if 
         # we want can add it as an additional Aparam to the AgentClient constructor
+        # ~ gong
 
     def query(self, collection_name, query_text, **kwargs):
         """
@@ -66,7 +68,7 @@ class AgentClient:
 
     def perform_phase_analysis(self, question: str, phase: str, step: int = 1, feedback: str = "", temp: float = None):
         """
-        performs analysis for a given structured phase 
+        performs analysis for a given structured phase defined in legalagents
         """
         if phase not in self.phases:
             raise ValueError(f"Invalid phase '{phase}'. Valid phases are: {self.phases}")
@@ -80,7 +82,7 @@ class AgentClient:
 
     def perform_full_structured_analysis(self, question: str):
         """
-        just a convenienence method that performs all structured phases sequentially and returns aggregated results
+        performs all structured phases sequentially and returns aggregated results
         """
         results = {}
         for idx, phase in enumerate(self.phases, start=1):
@@ -92,3 +94,29 @@ class AgentClient:
             )
             results[phase] = response
         return results
+
+    def synthesize_reviews(self, reviews):
+        """
+        uses legalreviewpanel to synthesize reviews from multiple agents/phases
+        """
+        review_panel = LegalReviewPanel(
+            input_model=self.agent.model,
+            api_keys=self.agent.api_keys,
+            agent_config=self.agent.config,
+            max_steps=len(reviews),
+        )
+        return review_panel.synthesize_reviews(reviews)
+
+    def refine_analysis_with_feedback(self, initial_results: dict, feedback: str):
+        """
+        refines analysis results based on feedback using iterative methods
+        """
+        refined_results = {}
+        for phase in initial_results.keys():
+            print(f"\nRefining '{phase}' analysis based on feedback...")
+            refined_results[phase] = self.perform_phase_analysis(
+                question=initial_results[phase],
+                phase=phase,
+                feedback=feedback
+            )
+        return refined_results
