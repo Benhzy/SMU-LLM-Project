@@ -1,5 +1,5 @@
-from vdb_manager import db
-from legalagents import Internal, External, LegalReviewPanel
+from database.vdb_manager import db
+from helper.legalagents import Internal, External, LegalReviewPanel
 from helper.configloader import load_agent_config
 import os
 
