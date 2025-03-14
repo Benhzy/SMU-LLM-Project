@@ -6,6 +6,7 @@ from typing import Dict, Optional
 from helper.agent_clients import AgentClient
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 class LegalSimulationWorkflow:
