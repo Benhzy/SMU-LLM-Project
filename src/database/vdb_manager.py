@@ -11,7 +11,7 @@ class db:
         """
         initialize a db instance
         """
-        self.client_name = client_name
+        self.client_name = db
         self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=EmbeddingModelName, device=device
         )
@@ -24,7 +24,7 @@ class db:
         """
         create a chromadb client instance for the given client_name
         """
-        client_path = os.path.join("db", self.client_name)
+        client_path = os.path.join("vdb", self.client_name)
         os.makedirs(client_path, exist_ok=True)
         return chromadb.PersistentClient(path=client_path)
 

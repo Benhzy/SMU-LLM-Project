@@ -1,4 +1,4 @@
-from helper.extract import DocumentExtractor
+from helper.extract_doc import DocumentExtractor
 import os
 import database.vdb_manager as vdbm
 import time
