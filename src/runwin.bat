@@ -6,7 +6,7 @@ echo ================================
 
 REM PARSE COMMAND LINE ARGUMENTS. EDIT HERE 
 set MODEL=deepseek-chat
-@REM set QUESTION=How has the principle of 'duty of care' evolved over time? Focus specifically on the legal frameworks used.
+set QUESTION=How has the principle of 'duty of care' evolved over time? Focus specifically on the legal frameworks used.
 
 REM UNUSED! flag for potential Q&A based on result
 set INTERACTIVE=
