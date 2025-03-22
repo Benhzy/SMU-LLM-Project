@@ -38,3 +38,4 @@ __pycache__/*
 Figure*.png
 testrun.py
 src/results/*
+output
