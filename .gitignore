@@ -17,10 +17,7 @@ venv_agent_lab/
 .checkpoints/
 
 # folders for db testing. main is the name of the client!
-./INTERNAL/
-./EXTERNAL/
-
-./db/MAIN/
+./src/db
  
 .idea*
 tst*

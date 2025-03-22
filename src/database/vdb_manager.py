@@ -11,7 +11,7 @@ class db:
         """
         initialize a db instance
         """
-        self.client_name = db
+        self.client_name = client_name
         self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=EmbeddingModelName, device=device
         )
