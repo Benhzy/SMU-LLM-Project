@@ -1,3 +1,5 @@
+# ----- REQUIRED IMPORTS -----
+
 import os
 import json
 import datetime
@@ -6,15 +8,19 @@ from typing import Dict, Optional
 from helper.agent_clients import AgentClient
 from dotenv import load_dotenv
 
+# ----- INITIALIZATION CODE -----
 
 load_dotenv()
 
+# ----- HELPER FUNCTIONS -----
+
 class LegalSimulationWorkflow:
-    def __init__(self, legal_question: str, api_keys: dict, model_backbone: Optional[str] = None):
+    def __init__(self, legal_question: str, api_keys: dict, model_backbone: Optional[str] = None, hypothetical: Optional[str] = None):
         """
         initialize the legal simulation workflow
         """
         self.legal_question = legal_question
+        self.hypothetical = hypothetical
         self.api_keys = api_keys
         self.model_backbone = model_backbone
 
@@ -67,16 +73,20 @@ class LegalSimulationWorkflow:
             print("\nInitiating legal analysis workflow...")
             analysis_results = {
                 "legal_question": self.legal_question,
+                "hypothetical": self.hypothetical,
                 "timestamp": self.timestamp,
                 "model": self.model_backbone,
                 "agent_outputs": {},
                 "final_synthesis": None
             }
 
+            # Determine what to analyze (question or hypothetical)
+            analysis_text = self.hypothetical if self.hypothetical else self.legal_question
+
             # Perform analysis for each agent
             for agent_name, agent in self.agents.items():
                 print(f"\nPerforming analysis using {agent_name}...")
-                agent_results = agent.perform_full_structured_analysis(question=self.legal_question)
+                agent_results = agent.perform_full_structured_analysis(question=analysis_text)
                 analysis_results["agent_outputs"][agent_name] = agent_results
 
             # Synthesize reviews using Internal and External outputs
@@ -110,6 +120,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Legal Analysis Simulation System")
     parser.add_argument("--model", type=str, help="Selected model for generation")
     parser.add_argument("--question", type=str, help="The legal question to analyze")
+    parser.add_argument("--hypo", type=str, help="The legal hypothetical scenario to analyze")
     return parser.parse_args()
 
 
@@ -118,13 +129,16 @@ def main():
     main execution flow
     """
 
-    # Parse arguments
     args = parse_arguments()
     selected_model = args.model or "gpt-4o-mini"
     legal_question = args.question
+    hypothetical = args.hypo
 
-    if not legal_question:
-        raise ValueError("A legal question must be provided via command-line arguments.")
+    # more logging, can remove if deemed unhelpful ~ gong
+    if legal_question and hypothetical: 
+        raise ValueError("Cannot provide both a legal question and a hypothetical. Please choose one.")
+    if not legal_question and not hypothetical: 
+        raise ValueError("Either a legal question (--question) or a legal hypothetical (--hypo) must be provided.")
 
     # Get API keys from environment variables
     api_keys = {
@@ -134,20 +148,28 @@ def main():
     }
 
     if not any(api_keys.values()):
-        raise ValueError("At least one API key must be provided via environment variables.")
+        raise ValueError("No API keys provided. At least one API key must be provided via environment variables.")
+    else:  # just me being extra and adding more logging, we can remove this later ~ gong
+        missing_keys = [key for key, value in api_keys.items() if not value]
+        if missing_keys:
+            print(f"\nWarning: The following API keys are missing: {', '.join(missing_keys)}")
+            print("Only services with valid API keys will be available.")        
+        available_keys = [key for key, value in api_keys.items() if value]
+        print(f"\nAvailable API services: {', '.join(available_keys)}")
 
-    # Initialize and execute the workflow
     try:
         print("\nInitializing legal simulation workflow...")
         workflow = LegalSimulationWorkflow(
-            legal_question=legal_question,
+            legal_question=legal_question or "", # pass empty string if none, might want to make the checking better
             api_keys=api_keys,
             model_backbone=selected_model,
+            hypothetical=hypothetical or "", # pass empty string if none, might want to make the checking more comprehensive
         )
         workflow.perform_legal_analysis()
     except Exception as e:
         print(f"\nError during analysis: {str(e)}")
 
+# ----- EXECUTION CODE -----
 
 if __name__ == "__main__":
     main()

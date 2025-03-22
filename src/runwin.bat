@@ -4,9 +4,10 @@ setlocal EnableDelayedExpansion
 echo Legal Analysis Simulation System
 echo ================================
 
-REM PARSE COMMAND LINE ARGUMENTS. EDIT HERE 
+REM PARSE COMMAND LINE ARGUMENTS
 set MODEL=deepseek-chat
-set QUESTION=How has the principle of 'duty of care' evolved over time? Focus specifically on the legal frameworks used.
+set QUESTION=
+set HYPOTHETICAL=
 
 REM UNUSED! flag for potential Q&A based on result
 set INTERACTIVE=
@@ -19,7 +20,17 @@ if /i "%~1"=="--model" (
 ) else if /i "%~1"=="--interactive" (
     set INTERACTIVE=--interactive
 ) else if /i "%~1"=="--question" (
+    if not "!HYPOTHETICAL!"=="" (
+        echo Error: Cannot provide both --question and --hypo flags. Please choose one.
+        exit /b 1
+    )
     set QUESTION=%~2
+    shift
+) else if /i "%~1"=="--hypo" (
+    if not "!QUESTION!"=="" (
+        echo Error: Cannot provide both --question and --hypo flags. Please choose one.
+    )
+    set HYPOTHETICAL=%~2
     shift
 )
 shift
@@ -49,12 +60,23 @@ if "!MODEL!"=="" (
     if errorlevel 1 if not "!MODEL_CHOICE!"=="" set MODEL=!MODEL_CHOICE!
 )
 
-REM If question not provided via command line and we're not in interactive mode, prompt for it
-if "!QUESTION!"=="" (
+REM If neither question nor hypothetical provided, prompt for one
+if "!QUESTION!"=="" if "!HYPOTHETICAL!"=="" (
     echo.
-    echo You can provide your legal question now, or leave it blank to be prompted later.
+    echo Would you like to provide a legal question or a hypothetical scenario?
+    echo 1. Legal Question
+    echo 2. Hypothetical Scenario
     echo.
-    set /p QUESTION="Enter your legal question (or press Enter to be prompted during execution): "
+    set /p INPUT_CHOICE="Enter your choice (1 or 2): "
+    
+    if "!INPUT_CHOICE!"=="1" (
+        set /p QUESTION="Enter your legal question: "
+    ) else if "!INPUT_CHOICE!"=="2" (
+        set /p HYPOTHETICAL="Enter your legal hypothetical scenario: "
+    ) else (
+        echo Invalid choice. Defaulting to legal question.
+        set /p QUESTION="Enter your legal question: "
+    )
 )
 
 REM Build the command
@@ -73,6 +95,11 @@ if not "!INTERACTIVE!"=="" (
 REM Add question if specified
 if not "!QUESTION!"=="" (
     set CMD=!CMD! --question "!QUESTION!"
+)
+
+REM Add hypothetical if specified
+if not "!HYPOTHETICAL!"=="" (
+    set CMD=!CMD! --hypo "!HYPOTHETICAL!"
 )
 
 echo.
