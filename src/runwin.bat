@@ -29,6 +29,7 @@ if /i "%~1"=="--model" (
 ) else if /i "%~1"=="--hypo" (
     if not "!QUESTION!"=="" (
         echo Error: Cannot provide both --question and --hypo flags. Please choose one.
+        exit /b 1
     )
     set HYPOTHETICAL=%~2
     shift
@@ -63,16 +64,21 @@ if "!MODEL!"=="" (
 REM If neither question nor hypothetical provided, prompt for one
 if "!QUESTION!"=="" if "!HYPOTHETICAL!"=="" (
     echo.
-    echo Would you like to provide a legal question or a hypothetical scenario?
+    echo Would you like to provide a legal question or a hypothetical directory?
     echo 1. Legal Question
-    echo 2. Hypothetical Scenario
+    echo 2. Hypothetical Directory
     echo.
     set /p INPUT_CHOICE="Enter your choice (1 or 2): "
     
     if "!INPUT_CHOICE!"=="1" (
         set /p QUESTION="Enter your legal question: "
     ) else if "!INPUT_CHOICE!"=="2" (
-        set /p HYPOTHETICAL="Enter your legal hypothetical scenario: "
+        set /p HYPOTHETICAL="Enter the path to your hypothetical directory: "
+        REM Verify the directory exists
+        if not exist "!HYPOTHETICAL!\" (
+            echo Error: The specified directory does not exist or is not a directory.
+            exit /b 1
+        )
     ) else (
         echo Invalid choice. Defaulting to legal question.
         set /p QUESTION="Enter your legal question: "
