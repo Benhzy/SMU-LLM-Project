@@ -75,9 +75,9 @@ fi
 # If neither question nor hypothetical provided via command line, prompt for one
 if [ -z "$QUESTION" ] && [ -z "$HYPOTHETICAL" ]; then
   echo
-  echo "Would you like to provide a legal question or a hypothetical scenario?"
+  echo "Would you like to provide a legal question or a hypothetical directory?"
   echo "1. Legal Question"
-  echo "2. Hypothetical Scenario"
+  echo "2. Hypothetical Directory"
   read -p "Enter your choice (1 or 2): " INPUT_CHOICE
   
   case $INPUT_CHOICE in
@@ -85,7 +85,12 @@ if [ -z "$QUESTION" ] && [ -z "$HYPOTHETICAL" ]; then
       read -p "Enter your legal question: " QUESTION
       ;;
     2)
-      read -p "Enter your legal hypothetical scenario: " HYPOTHETICAL
+      read -p "Enter the path to your hypothetical directory: " HYPOTHETICAL
+      # Verify the directory exists
+      if [ ! -d "$HYPOTHETICAL" ]; then
+        echo "Error: The specified directory does not exist or is not a directory."
+        exit 1
+      fi
       ;;
     *)
       echo "Invalid choice. Defaulting to legal question."

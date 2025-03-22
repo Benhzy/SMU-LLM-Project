@@ -190,7 +190,7 @@ def main():
     hypothetical = args.hypo
 
     # more logging, can remove if deemed unhelpful ~ gong
-    if hypothetical and not os.path.isdir(hypothetical): # verify hypothetical directory exists if provided
+    if hypothetical and not os.path.isdir(hypothetical): # verify hypothetical directory exists if provided, actually im checking this in the runmac.sh and runwin.bat already so maybe can remove??? ~ gong
         raise ValueError(f"The specified hypothetical directory '{hypothetical}' does not exist or is not a directory.")
     if legal_question and hypothetical: 
         raise ValueError("Cannot provide both a legal question and a hypothetical. Please choose one.")
