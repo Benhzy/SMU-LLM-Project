@@ -2,7 +2,6 @@ import torch
 from typing import Dict, List, Tuple, Optional
 from nltk.tokenize import sent_tokenize
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-import logging
 
 class SummaryEvaluator:
     """
@@ -20,9 +19,6 @@ class SummaryEvaluator:
             entailment_threshold: Threshold for determining entailment
             device: Device to run inference on ('cuda' or 'cpu')
         """
-        # Configure logging
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
         
         # Set device for inference
         if device is None:
