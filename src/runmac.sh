@@ -5,7 +5,8 @@ echo "================================"
 
 # PARSE COMMAND LINE ARGUMENTS. EDIT HERE 
 MODEL="deepseek-chat"
-QUESTION="How has the principle of 'duty of care' evolved over time? Focus specifically on the legal frameworks used."
+QUESTION=""
+HYPOTHETICAL=""
 
 # UNUSED! flag for potential Q&A based on result
 INTERACTIVE=""
@@ -21,7 +22,19 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --question)
+      if [ ! -z "$HYPOTHETICAL" ]; then
+        echo "Error: Cannot provide both --question and --hypo flags. Please choose one."
+        exit 1
+      fi
       QUESTION="$2"
+      shift 2
+      ;;
+    --hypo)
+      if [ ! -z "$QUESTION" ]; then
+        echo "Error: Cannot provide both --question and --hypo flags. Please choose one."
+        exit 1
+      fi
+      HYPOTHETICAL="$2"
       shift 2
       ;;
     *)
@@ -59,12 +72,31 @@ if [ -z "$MODEL" ]; then
   esac
 fi
 
-# If question not provided via command line, prompt for it
-if [ -z "$QUESTION" ]; then
+# If neither question nor hypothetical provided via command line, prompt for one
+if [ -z "$QUESTION" ] && [ -z "$HYPOTHETICAL" ]; then
   echo
-  echo "You can provide your legal question now, or leave it blank to be prompted later."
-  echo
-  read -p "Enter your legal question (or press Enter to be prompted during execution): " QUESTION
+  echo "Would you like to provide a legal question or a hypothetical directory?"
+  echo "1. Legal Question"
+  echo "2. Hypothetical Directory"
+  read -p "Enter your choice (1 or 2): " INPUT_CHOICE
+  
+  case $INPUT_CHOICE in
+    1)
+      read -p "Enter your legal question: " QUESTION
+      ;;
+    2)
+      read -p "Enter the path to your hypothetical directory: " HYPOTHETICAL
+      # Verify the directory exists
+      if [ ! -d "$HYPOTHETICAL" ]; then
+        echo "Error: The specified directory does not exist or is not a directory."
+        exit 1
+      fi
+      ;;
+    *)
+      echo "Invalid choice. Defaulting to legal question."
+      read -p "Enter your legal question: " QUESTION
+      ;;
+  esac
 fi
 
 # Build the command
@@ -85,11 +117,15 @@ if [ ! -z "$QUESTION" ]; then
   CMD="$CMD --question \"$QUESTION\""
 fi
 
+# Add hypothetical if specified
+if [ ! -z "$HYPOTHETICAL" ]; then
+  CMD="$CMD --hypo \"$HYPOTHETICAL\""
+fi
+
 echo
 echo "Running command: $CMD"
 echo
 
-# Execute the command - using eval to handle the quotes in the command
 eval $CMD
 
 echo
