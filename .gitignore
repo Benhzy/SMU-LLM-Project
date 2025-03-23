@@ -9,8 +9,30 @@ __pycache__/
 env/
 venv/
 ENV/
+.vscode/
+venv_agent_lab/
 
 # cached models & checkpoints
 .cache/
 .checkpoints/
 
+# folders for db testing. main is the name of the client!
+./src/db
+ 
+.idea*
+tst*
+state*
+junk/*
+huggingface_*
+junk/logs
+papers*
+hf*
+junk/data/*
+research_dir/*
+.DS_Store
+state_saves/*
+__pycache__/*
+Figure*.png
+testrun.py
+src/results/*
+output
