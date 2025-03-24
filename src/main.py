@@ -1,6 +1,7 @@
 # ----- REQUIRED IMPORTS -----
 
 import os
+import sys
 import json
 import datetime
 import argparse
@@ -23,7 +24,7 @@ def process_hypothetical_directory(hypo_dir: str) -> str:
     os.makedirs(processed_dir, exist_ok=True)
     print(f"\nExtracting hypotheticals from {hypo_dir}...")
     try:
-        subprocess.run(["python", "helper/extract_hypo.py", "--inpath", hypo_dir, "--outpath", processed_dir], check=True) # calling extract_hypo.py as a subprocess rn
+        subprocess.run([sys.executable, "helper/extract_hypo.py", "--inpath", hypo_dir, "--outpath", processed_dir], check=True) # modified this to use current environment
     except subprocess.CalledProcessError as e:
         raise Exception(f"Error running extract_hypo.py: {str(e)}")
     json_path = os.path.join(processed_dir, "extracted_data.json")

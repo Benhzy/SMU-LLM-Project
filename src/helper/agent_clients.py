@@ -1,4 +1,4 @@
-from database.vdb_manager import db
+from helper.vdb_manager import db
 from helper.legalagents import Internal, External, LegalReviewPanel
 from helper.configloader import load_agent_config
 import os
@@ -99,10 +99,13 @@ class AgentClient:
         """
         uses legalreviewpanel to synthesize reviews from multiple agents/phases
         """
+        # You need to access the original config that was used to initialize the agent
+        config = load_agent_config()  # This should be the same function used in __init__
+        
         review_panel = LegalReviewPanel(
             input_model=self.agent.model,
             api_keys=self.agent.api_keys,
-            agent_config=self.agent.config,
+            agent_config=config,  # Pass the full config here, not self.agent.config
             max_steps=len(reviews),
         )
         return review_panel.synthesize_reviews(reviews)

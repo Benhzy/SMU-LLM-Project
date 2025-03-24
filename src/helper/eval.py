@@ -121,18 +121,3 @@ class SummaryEvaluator:
             "Flagged Sentences": flagged_sentences
         }
 
-
-# Example usage
-if __name__ == "__main__":
-    # Initialize evaluator
-    evaluator = SummaryEvaluator()
-    
-    # Example data
-    source_text = "This is the original document. It contains important information about various topics. The document discusses several key points that are essential for understanding the subject matter."
-    
-    summary_text = "The document contains important information about various topics and discusses key points."
-    
-    # Evaluate summary
-    results = evaluator.evaluate_summary(source_text, summary_text)
-    print(f"Overall Entailment Score: {results['Entailment Score']}")
-    print(f"Flagged Sentences: {results['Flagged Sentences']}")

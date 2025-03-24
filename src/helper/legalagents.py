@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import json
 import time
 from helper.inference import *
-from eval.eval import SummaryEvaluator
+from helper.eval import SummaryEvaluator
 
 @dataclass
 class ReviewCriteria:

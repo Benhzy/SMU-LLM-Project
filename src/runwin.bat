@@ -7,7 +7,7 @@ echo ================================
 REM PARSE COMMAND LINE ARGUMENTS
 set MODEL=deepseek-chat
 set QUESTION=
-set HYPOTHETICAL=
+set HYPOTHETICAL=input
 
 REM UNUSED! flag for potential Q&A based on result
 set INTERACTIVE=
