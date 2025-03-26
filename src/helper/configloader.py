@@ -77,19 +77,3 @@ def save_agent_config(
     except Exception as e:
         raise Exception(f"Error saving configuration: {str(e)}")
 
-# Example usage:
-if __name__ == "__main__":
-    try:
-        # Load existing config
-        config = load_agent_config()
-        print("Successfully loaded agent configuration")
-        
-        # Modify configuration if needed
-        # config['internal']['role_description'] = "Updated description..."
-        
-        # Save modified config
-        # save_agent_config(config)
-        # print("Successfully saved updated configuration")
-        
-    except Exception as e:
-        print(f"Error: {str(e)}")

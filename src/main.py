@@ -8,8 +8,9 @@ import argparse
 import subprocess
 from typing import Dict, Optional
 from helper.agent_clients import AgentClient
+from helper.legalagents import LegalReviewPanel
 from dotenv import load_dotenv
-
+from helper.configloader import load_agent_config
 # ----- INITIALIZATION CODE -----
 
 load_dotenv()
@@ -69,24 +70,14 @@ class LegalSimulationWorkflow:
         self.api_keys = api_keys
         self.model_backbone = model_backbone
 
-        self.agent_configs = {
-            "Internal": {
-                "type": "internal",
-                "allowed_collections": ["collection1", "collection2", "collection3"]
-            },
-            "External": {
-                "type": "external",
-                "allowed_collections": ["collection2", "collection3"]
-            }
-        }
-        # define agent configurations and allowed collections, these are placeholder values
-        # ~ gong
+        self.agent_configs = load_agent_config()
 
         # Initialize agents using AgentClient
         self.agents = {}
         for agent_name, config in self.agent_configs.items():
             self.agents[agent_name] = AgentClient(
                 name=agent_name,
+                config=self.agent_configs,
                 agent_type=config["type"],
                 model_str=self.model_backbone,
                 api_keys=self.api_keys,
@@ -158,16 +149,22 @@ class LegalSimulationWorkflow:
 
             # Synthesize reviews using Internal and External outputs
             print("\nSynthesizing perspectives...")
-            internal_review = analysis_results["agent_outputs"]["Internal"].get("review", "")
-            external_review = analysis_results["agent_outputs"]["External"].get("review", "")
+            internal_review = analysis_results["agent_outputs"]["internal"].get("review", "")
+            external_review = analysis_results["agent_outputs"]["external"].get("review", "")
 
             reviews = [
                 {"perspective": "internal_law", "review": internal_review},
                 {"perspective": "external_law", "review": external_review}
             ]
-
-            # Use one of the agents (e.g., Internal) to synthesize reviews
-            synthesis = self.agents["Internal"].synthesize_reviews(reviews, source_text=analysis_text)
+            print('check1 ')
+            review_panel = LegalReviewPanel(
+                input_model=self.model_backbone,
+                api_keys=self.api_keys,
+                agent_config=self.agent_configs,
+                max_steps=len(reviews),
+            )
+            synthesis = review_panel.synthesize_reviews(reviews, source_text=analysis_text)
+            print('check end')
             analysis_results["final_synthesis"] = synthesis
 
             # Save all results

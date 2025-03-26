@@ -1,16 +1,15 @@
 from helper.vdb_manager import db
 from helper.legalagents import Internal, External, LegalReviewPanel
-from helper.configloader import load_agent_config
+
 import os
 
 class AgentClient:
-    def __init__(self, name, agent_type="internal", model_str="gpt-4o-mini", api_keys=None, allowed_collections=None):
+    def __init__(self, name, config, agent_type="internal", model_str="gpt-4o-mini", api_keys=None, allowed_collections=None):
         """
         initializes an agentclient with access to specific collections in the chromadb database
         """
         if allowed_collections is None:
             allowed_collections = []
-        config = load_agent_config()
         agent_class = Internal if agent_type.lower() == 'internal' else External
         self.name = name
         self.agent = agent_class(
@@ -24,6 +23,7 @@ class AgentClient:
         # if im not wrong the phases are currently hardcoded within legalagents right if 
         # we want can add it as an additional Aparam to the AgentClient constructor
         # ~ gong
+        # Done
 
     def query(self, collection_name, query_text, **kwargs):
         """
@@ -85,7 +85,6 @@ class AgentClient:
         performs all structured phases sequentially and returns aggregated results
         """
         results = {}
-        print(question)
         for idx, phase in enumerate(self.phases, start=1):
             print(f"\nPerforming '{phase}' analysis (Step {idx}/{len(self.phases)})...")
             response = self.perform_phase_analysis(
@@ -95,21 +94,6 @@ class AgentClient:
             )
             results[phase] = response
         return results
-
-    def synthesize_reviews(self, reviews, source_text):
-        """
-        uses legalreviewpanel to synthesize reviews from multiple agents/phases
-        """
-        # You need to access the original config that was used to initialize the agent
-        config = load_agent_config()  # This should be the same function used in __init__
-        
-        review_panel = LegalReviewPanel(
-            input_model=self.agent.model,
-            api_keys=self.agent.api_keys,
-            agent_config=config,  # Pass the full config here, not self.agent.config
-            max_steps=len(reviews),
-        )
-        return review_panel.synthesize_reviews(reviews, source_text)
 
     def refine_analysis_with_feedback(self, initial_results: dict, feedback: str):
         """

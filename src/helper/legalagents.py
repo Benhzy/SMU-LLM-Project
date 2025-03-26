@@ -331,8 +331,16 @@ class LegalReviewPanel:
                 if len(lines) >= 3:
                     criterion_name = lines[0].strip().lower().replace(" ", "_")
                     score_line = lines[1].strip()
-                    score = int(score_line.split(":")[1].strip()) if ":" in score_line else 0
                     
+                    # Fix: Improve score extraction to handle non-standard formats
+                    if ":" in score_line:
+                        score_text = score_line.split(":")[1].strip()
+                        # Remove any non-numeric characters and convert to int
+                        score_digits = ''.join(c for c in score_text if c.isdigit())
+                        score = int(score_digits) if score_digits else 0
+                    else:
+                        score = 0
+                        
                     # Extract assessment (may be multiple lines)
                     assessment_start = 0
                     for i, line in enumerate(lines[2:], 2):
@@ -381,7 +389,7 @@ class LegalReviewPanel:
             evaluation_result["average_score"] = 5
             evaluation_result["overall_assessment"] = f"Automated evaluation failed: {str(e)}"
             return evaluation_result
-            
+                    
     def evaluate_factual_consistency(self, source_text: str, generated_text: str) -> Dict[str, Any]:
         """
         Evaluate factual consistency between source text and generated analysis
@@ -418,11 +426,12 @@ class LegalReviewPanel:
         # Validate required perspectives
         required_perspectives = {"internal_law", "external_law"}
         provided_perspectives = {r["perspective"] for r in reviews}
+        print('check 2')
         
         if not required_perspectives.issubset(provided_perspectives):
             missing = required_perspectives - provided_perspectives
             raise ValueError(f"Missing required perspectives: {missing}")
-        
+        print('check 3')
         # Extract perspectives
         internal_perspective = next(r["review"] for r in reviews if r["perspective"] == "internal_law")
         external_perspective = next(r["review"] for r in reviews if r["perspective"] == "external_law")
@@ -435,10 +444,12 @@ class LegalReviewPanel:
         )
         
         try:
+            print('check 4')
             # Generate synthesis
             synthesis_text = self._query_model(sys_prompt, synthesis_prompt)
             
             # Evaluate the synthesis
+            print('check 5')
             evaluation = self.evaluate_legal_analysis(synthesis_text, source_text)
             
             # Result structure
@@ -451,9 +462,10 @@ class LegalReviewPanel:
             
             # Add factual consistency check if source text is provided
             if source_text:
+                print('check 6')
                 consistency_evaluation = self.evaluate_factual_consistency(source_text, synthesis_text)
                 result["consistency_evaluation"] = consistency_evaluation
-                
+                print('check 7')
                 # Add a warning flag if factual inconsistencies are detected
                 if consistency_evaluation["Flagged Sentences"]:
                     result["has_factual_inconsistencies"] = True

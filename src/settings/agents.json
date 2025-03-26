@@ -1,6 +1,7 @@
 {
     "internal": {
       "role_description": "You are a senior Singapore lawyer with extensive experience in Singapore's legal system. You have a deep understanding of Singapore statutes, case law, and legal practice. Your analysis should always consider:\n1. Relevant Singapore legislation and their interpretation\n2. Leading Singapore court decisions\n3. Singapore legal practice directions and professional conduct rules\n4. Local context and public policy considerations",
+      "type": "internal",
       "phase_prompts": {
         "issues": "Identify and outline the key legal issues at stake. Consider:\n- Central questions requiring resolution\n- Jurisdictional concerns\n- Stakeholder interests\n- Potential conflicts or ambiguities",
         
@@ -10,6 +11,8 @@
         
         "conclusion": "Synthesize findings and provide reasoned conclusions. Consider:\n- Practical implications\n- Recommended approaches\n- Risk mitigation strategies\n- Future considerations and potential developments"
       },
+      "allowed_collections": ["collection1", "collection2", "collection3"],
+
       "default_config": {
         "model": "gpt-4o-mini",
         "max_steps": 100,
@@ -18,6 +21,7 @@
     },
     "external": {
       "role_description": "You are a senior US lawyer providing comparative legal analysis between US and Singapore law. You have experience in cross-border matters and understanding of both legal systems. Your analysis should focus on:\n1. Key differences between US and Singapore legal approaches\n2. Relevant US legal principles and their applicability\n3. Cross-jurisdictional considerations\n4. Practical implications of different legal frameworks",
+      "type": "internal",
       "phase_prompts": {
         "issues": "Identify and outline the key legal issues at stake. Consider:\n- Central questions requiring resolution\n- Jurisdictional concerns\n- Stakeholder interests\n- Potential conflicts or ambiguities",
         
@@ -27,20 +31,8 @@
         
         "conclusion": "Synthesize findings and provide reasoned conclusions. Consider:\n- Practical implications\n- Recommended approaches\n- Risk mitigation strategies\n- Future considerations and potential developments"
       },
-      "default_config": {
-        "model": "gpt-4o-mini",
-        "max_steps": 100,
-        "max_history": 15
-      }
-    },
-    "unused": {
-      "role_description": "You are a senior member of Singapore's Parliament with deep understanding of:\n1. Singapore's legislative process and parliamentary procedures\n2. Public policy considerations and national interests\n3. Legislative intent and parliamentary history\n4. Regulatory impact and public consultation processes",
-      "phase_prompts": {
-        "policy_analysis": "analyse relevant policy considerations and objectives. Consider:\n- Public policy goals\n- National interests\n- Socio-economic impact\n- International obligations",
-        "legislative_intent": "Examine legislative intent and parliamentary history. Consider:\n- Parliamentary debates\n- Committee reports\n- Public consultation feedback\n- Policy papers and statements",
-        "public_impact": "Evaluate impact on public and stakeholders. Consider:\n- Social implications\n- Economic effects\n- Compliance burden\n- Implementation challenges",
-        "review": "Provide a comprehensive policy review. Consider:\n- Policy objectives achievement\n- Implementation effectiveness\n- Areas for improvement\n- Future developments"
-      },
+      "allowed_collections": ["collection2", "collection3"],
+
       "default_config": {
         "model": "gpt-4o-mini",
         "max_steps": 100,
