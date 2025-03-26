@@ -96,7 +96,7 @@ class AgentClient:
             results[phase] = response
         return results
 
-    def synthesize_reviews(self, reviews):
+    def synthesize_reviews(self, reviews, source_text):
         """
         uses legalreviewpanel to synthesize reviews from multiple agents/phases
         """
@@ -109,7 +109,7 @@ class AgentClient:
             agent_config=config,  # Pass the full config here, not self.agent.config
             max_steps=len(reviews),
         )
-        return review_panel.synthesize_reviews(reviews)
+        return review_panel.synthesize_reviews(reviews, source_text)
 
     def refine_analysis_with_feedback(self, initial_results: dict, feedback: str):
         """
