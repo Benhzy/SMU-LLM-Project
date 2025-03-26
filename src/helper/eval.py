@@ -26,7 +26,6 @@ class SummaryEvaluator:
         else:
             self.device = torch.device(device)
         
-        self.logger.info(f"Using device: {self.device}")
         
         # Load NLI model
         self.tokenizer = AutoTokenizer.from_pretrained(nli_model_name)

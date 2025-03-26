@@ -260,7 +260,7 @@ class LegalReviewPanel:
         # Initialize factual consistency evaluator
         self.consistency_evaluator = SummaryEvaluator(entailment_threshold=entailment_threshold)
 
-    def _query_model_safely(self, system_prompt: str, prompt: str) -> str:
+    def _query_model(self, system_prompt: str, prompt: str) -> str:
         """Helper method to safely query the model with error handling"""
         try:
             return query_model(
@@ -273,7 +273,7 @@ class LegalReviewPanel:
             print(f"Error querying model: {str(e)}")
             raise
 
-    def evaluate_legal_analysis(self, legal_text: str) -> Dict[str, Any]:
+    def evaluate_legal_analysis(self, legal_text: str, source_text: str) -> Dict[str, Any]:
         """
         Evaluate a legal text based on the criteria defined in review_config
         
@@ -294,7 +294,7 @@ class LegalReviewPanel:
         # Prepare evaluation prompt
         sys_prompt = (
             "You are an expert legal evaluation system. "
-            "Assess the provided legal analysis based on the specified criteria. "
+            "Assess the provided legal analysis for a hypothethical scenario or a legal question based on the specified criteria. "
             "Provide numerical scores (1-10) and detailed qualitative assessments for each criterion."
         )
         
@@ -309,7 +309,8 @@ class LegalReviewPanel:
                 eval_prompt += f"- {score_range}: {description}\n"
             eval_prompt += "\n"
         
-        eval_prompt += f"Legal Analysis to Evaluate:\n\n{legal_text}\n\n"
+        eval_prompt += f"Hypothethical senario/question:\n\n{legal_text}\n\n"
+        eval_prompt += f"Legal Analysis to Evaluate:\n\n{source_text}\n\n"
         eval_prompt += "For each criterion, provide:\n"
         eval_prompt += "1. A numerical score between 1-10\n"
         eval_prompt += "2. A detailed qualitative assessment explaining the score\n\n"
@@ -319,7 +320,7 @@ class LegalReviewPanel:
         
         try:
             # Query model for evaluation
-            evaluation_response = self._query_model_safely(sys_prompt, eval_prompt)
+            evaluation_response = self._query_model(sys_prompt, eval_prompt)
             
             # Parse the evaluation response
             sections = evaluation_response.split("Criterion:")
@@ -435,10 +436,10 @@ class LegalReviewPanel:
         
         try:
             # Generate synthesis
-            synthesis_text = self._query_model_safely(sys_prompt, synthesis_prompt)
+            synthesis_text = self._query_model(sys_prompt, synthesis_prompt)
             
             # Evaluate the synthesis
-            evaluation = self.evaluate_legal_analysis(synthesis_text)
+            evaluation = self.evaluate_legal_analysis(synthesis_text, source_text)
             
             # Result structure
             result = {

@@ -116,29 +116,40 @@ class LegalSimulationWorkflow:
 
         try:
             print("\nInitiating legal analysis workflow...")
-            analysis_results = {
-                "legal_question": self.legal_question,
-                "hypothetical": self.hypothetical,
-                "timestamp": self.timestamp,
-                "model": self.model_backbone,
-                "agent_outputs": {},
-                "final_synthesis": None
-            }
+
+
+            if self.hypothetical:
+                analysis_text = process_hypothetical_directory(self.hypothetical)
+                analysis_results = {
+                    "legal_question": None,
+                    "hypothetical": analysis_text,
+                    "timestamp": self.timestamp,
+                    "model": self.model_backbone,
+                    "agent_outputs": {},
+                    "final_synthesis": None
+                }
+                print(analysis_text)
+            else:
+                analysis_text = self.legal_question
+
+                analysis_results = {
+                    "legal_question": analysis_text,
+                    "hypothetical": None,
+                    "timestamp": self.timestamp,
+                    "model": self.model_backbone,
+                    "agent_outputs": {},
+                    "final_synthesis": None
+                }
 
             # right now logic is just simplified to check for hypos first but
             # this is because im edge guarding within the runmac.sh and runwin.bat
             # calls already so that only one analysistext source can be called at 
             # once
             # ~ gong
-
-            if self.hypothetical:
-                analysis_text = process_hypothetical_directory(self.hypothetical)
-            else:
-                analysis_text = self.legal_question
-
-            # Determine what to analyze (question or hypothetical)
-            analysis_text = self.hypothetical if self.hypothetical else self.legal_question
-
+            
+            
+            # changed this as its passing the hypo directory instead of the acutal hypo                 
+            
             # Perform analysis for each agent
             for agent_name, agent in self.agents.items():
                 print(f"\nPerforming analysis using {agent_name}...")
@@ -156,7 +167,7 @@ class LegalSimulationWorkflow:
             ]
 
             # Use one of the agents (e.g., Internal) to synthesize reviews
-            synthesis = self.agents["Internal"].synthesize_reviews(reviews)
+            synthesis = self.agents["Internal"].synthesize_reviews(reviews, source_text=analysis_text)
             analysis_results["final_synthesis"] = synthesis
 
             # Save all results

@@ -85,6 +85,7 @@ class AgentClient:
         performs all structured phases sequentially and returns aggregated results
         """
         results = {}
+        print(question)
         for idx, phase in enumerate(self.phases, start=1):
             print(f"\nPerforming '{phase}' analysis (Step {idx}/{len(self.phases)})...")
             response = self.perform_phase_analysis(
