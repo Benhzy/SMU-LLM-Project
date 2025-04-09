@@ -11,6 +11,7 @@ from helper.agent_clients import AgentClient
 from helper.legalagents import LegalReviewPanel
 from dotenv import load_dotenv
 from helper.configloader import load_agent_config
+from helper.markdown_translator import convert_to_md
 # ----- INITIALIZATION CODE -----
 
 load_dotenv()
@@ -97,6 +98,7 @@ class LegalSimulationWorkflow:
         try:
             with open(output_file, 'w') as f:
                 json.dump(results, f, indent=2)
+            convert_to_md(output_file)
         except Exception as e:
             raise Exception(f"Error saving analysis results: {str(e)}")
 
