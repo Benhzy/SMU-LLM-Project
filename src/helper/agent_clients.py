@@ -80,19 +80,52 @@ class AgentClient:
             temp=temp
         )
 
-    def perform_full_structured_analysis(self, question: str):
+    def perform_full_structured_analysis(self, question: str, similarity_threshold=0.75):
         """
-        performs all structured phases sequentially and returns aggregated results
+        Performs all structured phases sequentially and returns aggregated results.
+        Enhanced with relevant legal documents from vector database.
         """
+        # Retrieve relevant legal documents from available collections
+        collections = list(self.vdb_manager.collections.keys())
+        relevant_contexts = []
+        
+        for collection in collections:
+            try:
+                # Extract collection name without client prefix
+                collection_name = collection.replace(f"{self.vdb_manager.client_name}_", "")
+                documents = self.query_documents(
+                    collection_name=collection_name,
+                    query_text=question,
+                    similarity_threshold=similarity_threshold
+                )
+                
+                if documents:
+                    context = f"Documents from {collection_name}:\n" + "\n\n".join(documents)
+                    relevant_contexts.append(context)
+            except Exception as e:
+                print(f"Error querying collection {collection}: {str(e)}")
+        
+        # Create enhanced question with retrieved context
+        enhanced_question = question
+        if relevant_contexts:
+            context_text = "\n\n".join(relevant_contexts)
+            enhanced_question = (
+                f"Original Question: {question}\n\n"
+                f"Relevant Legal Context:\n{context_text}\n\n"
+                f"Based on the above context and your legal knowledge, please analyze the original question."
+            )
+        
+        # Perform analysis through all phases
         results = {}
         for idx, phase in enumerate(self.phases, start=1):
             print(f"\nPerforming '{phase}' analysis (Step {idx}/{len(self.phases)})...")
             response = self.perform_phase_analysis(
-                question=question,
+                question=enhanced_question,
                 phase=phase,
                 step=idx
             )
             results[phase] = response
+        
         return results
 
     def refine_analysis_with_feedback(self, initial_results: dict, feedback: str):
