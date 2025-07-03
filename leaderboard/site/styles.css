@@ -1,0 +1,121 @@
+body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: #f6f7fb;
+    margin: 0;
+    padding: 0;
+    color: #23272f;
+}
+
+.header-section {
+    max-width: 900px;
+    margin: 40px auto 24px auto;
+    padding: 0 16px;
+    text-align: center;
+}
+
+.header-section h1 {
+    font-size: 2.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #23272f;
+}
+
+.header-section p {
+    color: #6c7280;
+    font-size: 1.13rem;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+}
+
+.header-section .view-json-btn {
+    background: #f3f6fa;
+    border: 1px solid #dbe0e8;
+    color: #374151;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, border 0.2s;
+    margin-bottom: 24px;
+}
+.header-section .view-json-btn:hover {
+    background: #e5eaf1;
+    border-color: #bfc9d7;
+}
+
+.leaderboard-card {
+    background: #fff;
+    border-radius: 18px;
+    max-width: 950px;
+    margin: 0 auto 32px auto;
+    box-shadow: 0 4px 24px rgba(32, 39, 54, 0.12);
+    padding: 32px 24px 32px 24px;
+    overflow-x: auto;
+}
+
+#leaderboard {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 1.02rem;
+    background: #fff;
+}
+
+#leaderboard thead th {
+    background: #f6f7fb;
+    color: #23272f;
+    font-weight: 600;
+    padding: 12px 10px;
+    border-bottom: 2px solid #e3e6ee;
+    text-align: left;
+}
+
+#leaderboard tbody tr {
+    transition: background 0.13s;
+}
+
+#leaderboard tbody tr:hover {
+    background: #f3f6fa;
+}
+
+#leaderboard td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f0f1f6;
+    vertical-align: middle;
+}
+
+#leaderboard td:first-child,
+#leaderboard th:first-child {
+    text-align: right;
+    width: 60px;
+    color: #7a869a;
+}
+
+#leaderboard td:last-child,
+#leaderboard th:last-child {
+    text-align: right;
+    width: 120px;
+}
+
+.model-name {
+    font-weight: 500;
+    color: #222;
+}
+
+.overall-assessment {
+    max-width: 340px;
+    white-space: normal;
+    font-size: 0.98rem;
+    color: #5a6270;
+}
+
+@media (max-width: 700px) {
+    .leaderboard-card {
+        padding: 12px 2px;
+    }
+    #leaderboard th, #leaderboard td {
+        font-size: 0.95rem;
+        padding: 8px 6px;
+    }
+}
