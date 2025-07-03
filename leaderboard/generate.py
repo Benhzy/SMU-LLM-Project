@@ -1,10 +1,6 @@
-# ----- required imports -----
-
 import json
 import shutil
 from pathlib import Path
-
-# ----- execution code -----
 
 shutil.copyfile('analysis_results.json', 'leaderboard/site/analysis_results.json')
 
@@ -25,7 +21,149 @@ html_template = f"""<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <title>LLM Leaderboard</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+    body {{
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        background: #f7f8fa;
+        color: #23272f;
+        margin: 0;
+        padding: 0;
+    }}
+
+    .header-section {{
+        max-width: 700px;
+        margin: 40px auto 0 auto;
+        padding: 0 16px;
+        text-align: center;
+    }}
+
+    .header-section h1 {{
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #23272f;
+        letter-spacing: -1px;
+    }}
+
+    .header-section p {{
+        color: #6c7280;
+        font-size: 1.1rem;
+        margin-bottom: 1.2rem;
+        line-height: 1.5;
+    }}
+
+    .header-section .view-json-btn {{
+        background: #f3f6fa;
+        border: 1px solid #dbe0e8;
+        color: #374151;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 8px 18px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s, border 0.2s;
+        margin-bottom: 24px;
+    }}
+    .header-section .view-json-btn:hover {{
+        background: #e5eaf1;
+        border-color: #bfc9d7;
+    }}
+
+    .leaderboard-card {{
+        background: #fff;
+        border-radius: 18px;
+        max-width: 900px;
+        margin: 32px auto 32px auto;
+        box-shadow: 0 4px 24px rgba(32, 39, 54, 0.10);
+        padding: 32px 24px 32px 24px;
+        overflow-x: auto;
+    }}
+
+    #leaderboard {{
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 1.04rem;
+        background: #fff;
+    }}
+
+    #leaderboard thead th {{
+        background: #f6f7fb;
+        color: #23272f;
+        font-weight: 600;
+        padding: 13px 10px;
+        border-bottom: 2px solid #e3e6ee;
+        text-align: left;
+        font-size: 1.05rem;
+    }}
+
+    #leaderboard tbody tr {{
+        transition: background 0.13s;
+    }}
+
+    #leaderboard tbody tr:hover {{
+        background: #f3f6fa;
+    }}
+
+    #leaderboard td {{
+        padding: 13px 10px;
+        border-bottom: 1px solid #f0f1f6;
+        vertical-align: middle;
+    }}
+
+    #leaderboard td:first-child,
+    #leaderboard th:first-child {{
+        text-align: right;
+        width: 60px;
+        color: #c0c4cc;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }}
+
+    #leaderboard td:last-child,
+    #leaderboard th:last-child {{
+        text-align: right;
+        width: 120px;
+    }}
+
+    .model-name {{
+        font-weight: 500;
+        color: #222;
+    }}
+
+    .overall-assessment {{
+        max-width: 340px;
+        white-space: normal;
+        font-size: 0.98rem;
+        color: #5a6270;
+    }}
+
+    .rank-badge {{
+        display: inline-block;
+        min-width: 32px;
+        height: 32px;
+        line-height: 32px;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 1.08rem;
+        text-align: center;
+        background: #f3f6fa;
+        color: #6c7280;
+    }}
+    .rank-1 {{ background: linear-gradient(135deg, #ffe082 60%, #fffde4 100%); color: #bfa700; }}
+    .rank-2 {{ background: linear-gradient(135deg, #e0e0e0 60%, #f8f9fa 100%); color: #888; }}
+    .rank-3 {{ background: linear-gradient(135deg, #ffb07c 60%, #fff0e4 100%); color: #b86b00; }}
+
+    @media (max-width: 700px) {{
+        .leaderboard-card {{
+            padding: 12px 2px;
+        }}
+        #leaderboard th, #leaderboard td {{
+            font-size: 0.95rem;
+            padding: 8px 6px;
+        }}
+    }}
+    </style>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -64,9 +202,11 @@ for model in models:
         scores = model['final_synthesis']['evaluation']['scores']
         avg_score = model['final_synthesis']['evaluation']['average_score']
         assessment = model['final_synthesis']['evaluation']['overall_assessment']
+        final_score = model.get('final_score', '')
+        rank_class = f"rank-badge rank-{model['rank']}" if model['rank'] <= 3 else "rank-badge"
         html_template += f"""
             <tr>
-                <td>{model['rank']}</td>
+                <td><span class="{rank_class}">{model['rank']}</span></td>
                 <td class="model-name">{model['model']}</td>
                 <td>{scores.get('jurisdictional_understanding**', '')}</td>
                 <td>{scores.get('legal_reasoning**', '')}</td>
@@ -74,7 +214,7 @@ for model in models:
                 <td>{scores.get('practical_application**', '')}</td>
                 <td>{avg_score}</td>
                 <td class="overall-assessment">{assessment}</td>
-                <td>{model.get('final_score', '')}</td>
+                <td>{final_score}</td>
             </tr>
         """
     except Exception as e:
@@ -86,7 +226,7 @@ html_template += """
     </div>
     <script>
         $(document).ready(function() {
-            $('#leaderboard').DataTable({
+            $('leaderboard').DataTable({
                 "order": [[0, "asc"]],
                 "paging": false,
                 "info": false,
