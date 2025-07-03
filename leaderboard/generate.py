@@ -171,7 +171,7 @@ html_template = f"""<!DOCTYPE html>
             See how leading models stack up across legal reasoning, jurisdictional understanding.<br>
             This leaderboard is updated automatically from <code>analysis_results.json</code>.
         </p>
-        <button class="view-json-btn" onclick="window.open('analysis_results.json', '_blank')">
+        <button class="view-json-btn" onclick="window.open('https://github.com/Benhzy/SMU-LLM-Project/blob/main/analysis_results.json', '_blank')">
             View Raw analysis_results.json
         </button>
     </div>
