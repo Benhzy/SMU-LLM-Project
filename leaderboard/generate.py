@@ -78,6 +78,7 @@ for model in models:
             <td>{model['final_synthesis']['evaluation']['scores']['practical_application**']}</td>
             <td>{model['final_synthesis']['evaluation']['average_score']}</td>
             <td>{model['final_synthesis']['evaluation']['overall_assessment']}</td>
+            <td>Placeholder TO CHANGE</td>
         </tr>
     """
 
