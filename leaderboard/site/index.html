@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LLM Leaderboard</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <h1>LLM Leaderboard</h1>
+    <button onclick="window.location.href='analysis_results.json'">View Raw analysis_results.json</button>
+    <table id="leaderboard" class="display">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Model</th>
+                <th>Jurisdictional Understanding</th>
+                <th>Legal Reasoning</th>
+                <th>Comparative Analysis</th>
+                <th>Practical Application</th>
+                <th>Average Score</th>
+                <th>Overall Assessment</th>
+                <th>Final Score</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+            <td>1</td>
+            <td>deepseek-chat</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    
+        <tr>
+            <td>2</td>
+            <td>openai-chat</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    
+        <tr>
+            <td>3</td>
+            <td>perplexity-chat</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    
+        </tbody>
+    </table>
+    <script>
+        $(document).ready(function() {
+            $('#leaderboard').DataTable({
+                "order": [[0, "asc"]]
+            });
+        });
+    </script>
+</body>
+</html>

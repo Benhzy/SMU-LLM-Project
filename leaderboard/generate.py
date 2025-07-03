@@ -52,17 +52,32 @@ html_template = f"""
 """
 
 for model in models:
+    if model['final_synthesis']['evaluation']['scores']['jurisdictional_understanding'] is None:
+        print(f"Error: {model['model']} has no jurisdictional understanding score")
+        continue
+    if model['final_synthesis']['evaluation']['scores']['legal_reasoning'] is None:
+        print(f"Error: {model['model']} has no legal reasoning score")
+        continue
+    if model['final_synthesis']['evaluation']['scores']['comparative_analysis'] is None:
+        print(f"Error: {model['model']} has no comparative analysis score")
+        continue
+    if model['final_synthesis']['evaluation']['scores']['practical_application'] is None:
+        print(f"Error: {model['model']} has no practical application score")
+        continue
+    if model['final_synthesis']['average_score'] is None:
+        print(f"Error: {model['model']} has no average score")
+        continue
+    print("All attributes detected for model:", model['model'])
     html_template += f"""
         <tr>
             <td>{model['rank']}</td>
             <td>{model['model']}</td>
-            <td>{model.get('jurisdictional_understanding','')}</td>
-            <td>{model.get('legal_reasoning','')}</td>
-            <td>{model.get('comparative_analysis','')}</td>
-            <td>{model.get('practical_application','')}</td>
-            <td>{model.get('average_score','')}</td>
-            <td>{model.get('overall_assessment','')}</td>
-            <td>{model.get('final_score','')}</td>
+            <td>{model['final_synthesis']['evaluation']['scores']['jurisdictional_understanding']}</td>
+            <td>{model['final_synthesis']['evaluation']['scores']['legal_reasoning']}</td>
+            <td>{model['final_synthesis']['evaluation']['scores']['comparative_analysis']}</td>
+            <td>{model['final_synthesis']['evaluation']['scores']['practical_application']}</td>
+            <td>{model['final_synthesis']['average_score']}</td>
+            <td>{model['overall_assessment']}</td>
         </tr>
     """
 
