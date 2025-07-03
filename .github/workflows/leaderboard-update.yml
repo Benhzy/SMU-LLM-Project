@@ -1,5 +1,8 @@
 name: Update Leaderboard on analysis_results.json Change
 
+permissions:
+  contents: write
+
 on:
   push:
     paths:
