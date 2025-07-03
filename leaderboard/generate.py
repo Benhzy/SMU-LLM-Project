@@ -33,7 +33,7 @@ html_template = f"""
 </head>
 <body>
     <h1>LLM Leaderboard</h1>
-    <button onclick="window.location.href='../analysis_results.json'">View Raw analysis_results.json</button>
+    <button onclick="window.location.href='analysis_results.json'">View Raw analysis_results.json</button>
     <table id="leaderboard" class="display">
         <thead>
             <tr>
