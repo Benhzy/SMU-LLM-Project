@@ -54,7 +54,7 @@
     .leaderboard-card {
         background: #fff;
         border-radius: 18px;
-        max-width: 900px;
+        max-width: 1500px;
         margin: 32px auto 32px auto;
         box-shadow: 0 4px 24px rgba(32, 39, 54, 0.10);
         padding: 32px 24px 32px 24px;
@@ -106,12 +106,6 @@
         font-size: 1.1rem;
     }
 
-    #leaderboard td:last-child,
-    #leaderboard th:last-child {
-        text-align: right;
-        width: 120px;
-    }
-
     .model-name {
         font-weight: 500;
         color: #222;
@@ -120,18 +114,6 @@
     #leaderboard th.model-name, #leaderboard td.model-name {
         min-width: 170px;
         width: 200px;
-    }
-
-    .overall-assessment {
-        max-width: 340px;
-        white-space: normal;
-        font-size: 0.98rem;
-        color: #5a6270;
-    }
-
-    #leaderboard th.overall-assessment, #leaderboard td.overall-assessment {
-        min-width: 220px;
-        width: 260px;
     }
 
     .rank-badge {
@@ -171,8 +153,6 @@
             See how leading models stack up across legal reasoning, jurisdictional understanding.<br>
             This leaderboard is updated automatically from <code>analysis_results.json</code>.
         </p>
-        <img src="https://github.com/benhzy/smu-llm-project/actions/workflows/leaderboard-update.yml/badge.svg">
-        <br>
         <button class="view-json-btn" onclick="window.open('analysis_results.json', '_blank')">
             View Raw analysis_results.json
         </button>

@@ -72,7 +72,7 @@ html_template = f"""<!DOCTYPE html>
     .leaderboard-card {{
         background: #fff;
         border-radius: 18px;
-        max-width: 900px;
+        max-width: 1500px;
         margin: 32px auto 32px auto;
         box-shadow: 0 4px 24px rgba(32, 39, 54, 0.10);
         padding: 32px 24px 32px 24px;
@@ -124,12 +124,6 @@ html_template = f"""<!DOCTYPE html>
         font-size: 1.1rem;
     }}
 
-    #leaderboard td:last-child,
-    #leaderboard th:last-child {{
-        text-align: right;
-        width: 120px;
-    }}
-
     .model-name {{
         font-weight: 500;
         color: #222;
@@ -138,18 +132,6 @@ html_template = f"""<!DOCTYPE html>
     #leaderboard th.model-name, #leaderboard td.model-name {{
         min-width: 170px;
         width: 200px;
-    }}
-
-    .overall-assessment {{
-        max-width: 340px;
-        white-space: normal;
-        font-size: 0.98rem;
-        color: #5a6270;
-    }}
-
-    #leaderboard th.overall-assessment, #leaderboard td.overall-assessment {{
-        min-width: 220px;
-        width: 260px;
     }}
 
     .rank-badge {{
