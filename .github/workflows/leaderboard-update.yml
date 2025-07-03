@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'analysis_results.json'
+  workflow_dispatch:  
 
 jobs:
   update-leaderboard:
