@@ -20,7 +20,7 @@ html_template = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LLM Leaderboard</title>
+    <title>SMU LLM Project Leaderboard</title>
     <style>
     body {{
         font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
@@ -85,6 +85,7 @@ html_template = f"""<!DOCTYPE html>
         border-spacing: 0;
         font-size: 1.04rem;
         background: #fff;
+        table-layout: auto;
     }}
 
     #leaderboard thead th {{
@@ -95,6 +96,8 @@ html_template = f"""<!DOCTYPE html>
         border-bottom: 2px solid #e3e6ee;
         text-align: left;
         font-size: 1.05rem;
+        min-width: 120px;
+        padding: 13px 14px;
     }}
 
     #leaderboard tbody tr {{
@@ -114,7 +117,8 @@ html_template = f"""<!DOCTYPE html>
     #leaderboard td:first-child,
     #leaderboard th:first-child {{
         text-align: right;
-        width: 60px;
+        min-width: 60px;
+        width: 70px;
         color: #c0c4cc;
         font-weight: 700;
         font-size: 1.1rem;
@@ -131,11 +135,21 @@ html_template = f"""<!DOCTYPE html>
         color: #222;
     }}
 
+    #leaderboard th.model-name, #leaderboard td.model-name {{
+        min-width: 170px;
+        width: 200px;
+    }}
+
     .overall-assessment {{
         max-width: 340px;
         white-space: normal;
         font-size: 0.98rem;
         color: #5a6270;
+    }}
+
+    #leaderboard th.overall-assessment, #leaderboard td.overall-assessment {{
+        min-width: 220px;
+        width: 260px;
     }}
 
     .rank-badge {{
@@ -170,9 +184,9 @@ html_template = f"""<!DOCTYPE html>
 </head>
 <body>
     <div class="header-section">
-        <h1>Leaderboard Overview</h1>
+        <h1>SMU LLM Project Leaderboard</h1>
         <p>
-            See how leading models stack up across legal reasoning, jurisdictional understanding, and more.<br>
+            See how leading models stack up across legal reasoning, jurisdictional understanding.<br>
             This leaderboard is updated automatically from <code>analysis_results.json</code>.
         </p>
         <button class="view-json-btn" onclick="window.open('analysis_results.json', '_blank')">
@@ -226,7 +240,7 @@ html_template += """
     </div>
     <script>
         $(document).ready(function() {
-            $('leaderboard').DataTable({
+            $('#leaderboard').DataTable({
                 "order": [[0, "asc"]],
                 "paging": false,
                 "info": false,
