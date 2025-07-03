@@ -28,6 +28,12 @@ jobs:
       - name: Run leaderboard update script
         run: python leaderboard/generate.py
 
+      - name: Copy analysis_results.json to leaderboard/site if present
+        run: |
+          if [ -f analysis_results.json ]; then
+            cp analysis_results.json leaderboard/site/
+          fi
+
       - name: Commit and push changes
         run: |
           git pull 
